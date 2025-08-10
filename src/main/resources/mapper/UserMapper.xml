@@ -13,6 +13,7 @@
         <result property="userPassword" column="userPassword" />
         <result property="phone" column="phone" />
         <result property="email" column="email" />
+        <result property="tags" column="tags" />
         <result property="userStatus" column="userStatus" />
         <result property="createTime" column="createTime" />
         <result property="updateTime" column="updateTime" />
@@ -21,6 +22,6 @@
 
     <sql id="Base_Column_List">
         id,userName,role,avatarUrl,gender,userPassword,
-        phone,email,userStatus,createTime,updateTime,isDelete
+        phone,email,tags,userStatus,createTime,updateTime,isDelete
     </sql>
 </mapper>
