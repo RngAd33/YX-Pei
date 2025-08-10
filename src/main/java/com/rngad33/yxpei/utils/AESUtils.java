@@ -1,6 +1,6 @@
 package com.rngad33.yxpei.utils;
 
-import com.rngad33.usercenter.constant.AESConstant;
+import com.rngad33.yxpei.constant.AESConstant;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;

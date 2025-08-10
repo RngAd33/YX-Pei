@@ -1,7 +1,7 @@
 package com.rngad33.yxpei.utils;
 
-import com.rngad33.usercenter.exception.MyException;
-import com.rngad33.usercenter.model.enums.ErrorCodeEnum;
+import com.rngad33.yxpei.exception.MyException;
+import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
 
 /**
  * 异常抛出工具类

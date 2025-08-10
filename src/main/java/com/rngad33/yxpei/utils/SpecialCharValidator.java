@@ -1,6 +1,6 @@
 package com.rngad33.yxpei.utils;
 
-import com.rngad33.usercenter.model.enums.SpecialCharEnum;
+import com.rngad33.yxpei.model.enums.misc.SpecialCharEnum;
 
 /**
  * 特殊字符校验

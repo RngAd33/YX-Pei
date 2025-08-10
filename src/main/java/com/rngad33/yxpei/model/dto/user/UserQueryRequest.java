@@ -1,6 +1,6 @@
 package com.rngad33.yxpei.model.dto.user;
 
-import com.rngad33.usercenter.common.PageRequest;
+import com.rngad33.yxpei.common.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
