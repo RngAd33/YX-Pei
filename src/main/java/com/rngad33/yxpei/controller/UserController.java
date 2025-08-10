@@ -208,9 +208,7 @@ public class UserController {
     public BaseResponse<Boolean> userDelete(@RequestBody UserManageRequest userManageRequest,
                                             HttpServletRequest request) {
         Long id = userManager.getId(userManageRequest, request);
-        if (id == null) {
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
+        ThrowUtils.throwIf(id == null, ErrorCodeEnum.USER_LOSE_ACTION);
         boolean result = userService.removeById(id);   // 无需业务层
         ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION);
         return ResultUtils.success(true);
