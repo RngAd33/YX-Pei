@@ -10,10 +10,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @MapperScan("com.rngad33.yxpei.mapper")
 public class YxPeiApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(YxPeiApplication.class, args);
         System.out.println("后端服务已启动>>>");
     }
-
 }
