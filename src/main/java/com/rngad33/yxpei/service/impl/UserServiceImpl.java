@@ -80,7 +80,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             log.info("正在执行信息查重……");
             // - 名称查重
             QueryWrapper queryWrapper = new QueryWrapper();
-            queryWrapper.eq("userName", userName);
+            queryWrapper.eq("user_name", userName);
             long count = userMapper.selectCountByQuery(queryWrapper);
             if (count > 0) {
                 log.error(ErrorConstant.USER_NAME_ALREADY_EXIST_MESSAGE);
@@ -134,8 +134,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 3. 连接数据库，核对用户信息
         QueryWrapper queryWrapper = new QueryWrapper();
-        queryWrapper.eq("userName", userName);
-        queryWrapper.eq("userPassword", encryptedPassword);
+        queryWrapper.eq("user_name", userName);
+        queryWrapper.eq("user_password", encryptedPassword);
         User user = userMapper.selectOneByQuery(queryWrapper);
         // - 判断用户是否存在
         if (user == null) {
@@ -200,7 +200,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public List<User> searchUsers(String userName, HttpServletRequest request) {
         QueryWrapper queryWrapper = new QueryWrapper();
         if (StringUtils.isNotBlank(userName)) {
-            queryWrapper.like("userName", userName);   // 默认模糊查询
+            queryWrapper.like("user_name", userName);   // 默认模糊查询
         }
         List<User> userList = this.list(queryWrapper);
         return userList.stream()

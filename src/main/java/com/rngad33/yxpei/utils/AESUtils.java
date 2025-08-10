@@ -183,7 +183,7 @@ public class AESUtils {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        /* 生成随机密钥和IV
+        // 生成随机密钥和IV
         SecretKey key = generateKey();
         byte[] iv = generateIV();
 
@@ -192,7 +192,6 @@ public class AESUtils {
         System.out.println("密钥已保存到文件。");
         saveIV(iv);
         System.out.println("IV已保存到文件。");
-         */
 
         // 从文件加载密钥
         SecretKey loadedKey = loadKey();
