@@ -4,15 +4,13 @@ server:
 spring:
   profiles:
     active: dev
-#  datasource:
-#    driver-class-name: ${sky.datasource.driver-class-name}
-#    url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}
-#    username: ${sky.datasource.username}
-#    password: ${sky.datasource.password}
-
-mybatis-flex:
   datasource:
     driver-class-name: ${sky.datasource.driver-class-name}
+    url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}
+    username: ${sky.datasource.username}
+    password: ${sky.datasource.password}
+
+mybatis-flex:
   global-config:
     print-banner: true
     logic-delete-column: isDelete

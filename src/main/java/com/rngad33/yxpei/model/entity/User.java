@@ -37,6 +37,11 @@ public class User implements Serializable {
     private String avatarUrl;
 
     /**
+     * 性别：0-女，1-男
+     */
+    private Integer gender;
+
+    /**
      * 密码
      */
     @ColumnMask(Masks.PASSWORD)
