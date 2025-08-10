@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -266,7 +265,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 状态码
      */
     @Override
-    public Integer userOrBan(@RequestBody Long id, HttpServletRequest request) {
+    public Integer userOrBan(Long id, HttpServletRequest request) {
         // 1. 查询用户是否存在
         User user = userMapper.selectOneById(id);
         if (user == null) {

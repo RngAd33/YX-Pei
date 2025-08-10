@@ -9,6 +9,8 @@ spring:
     url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}
     username: ${sky.datasource.username}
     password: ${sky.datasource.password}
+  session:
+    timeout: ${sky.jwt.admin-ttl}
 
 mybatis-flex:
   global-config:
@@ -16,18 +18,12 @@ mybatis-flex:
     logic-delete-column: isDelete
     logic-delete-value: 1
     logic-not-delete-value: 0
+    table-underline: true
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  admin-config:
-    enable: true
-    endpoint: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}
-    secret-key: ${sky.datasource.password}
-  # 分页插件配置
-  pagehelper:
-    helper-dialect: mysql   # 数据库方言
-    reasonable: true
-    support-methods-arguments: true
-    params: count=countSql
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.rngad33.yxpei.entity
 
 knife4j:
   enable: true
