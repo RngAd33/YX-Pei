@@ -13,17 +13,16 @@ spring:
     timeout: ${sky.jwt.admin-ttl}
 
 mybatis-flex:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    # 显示数据库日志
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 开启驼峰命名
+    map-underscore-to-camel-case: true
   global-config:
-    print-banner: true
     logic-delete-column: isDelete
     logic-delete-value: 1
     logic-not-delete-value: 0
-    table-underline: true
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    map-underscore-to-camel-case: true
-  mapper-locations: classpath*:mapper/**/*.xml
-  type-aliases-package: com.rngad33.yxpei.entity
 
 knife4j:
   enable: true

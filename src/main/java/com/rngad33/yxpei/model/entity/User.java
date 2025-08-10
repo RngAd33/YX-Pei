@@ -6,13 +6,12 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * 用户模型
  */
 @Data
-@Table(value = "user")
+@Table("user")
 public class User implements Serializable {
 
     /**
@@ -59,9 +58,9 @@ public class User implements Serializable {
     private String email;
 
     /**
-     * 标签列表
+     * 标签列表（JSON）
      */
-    private List<String> tags;
+    private String tags;
 
     /**
      * 用户状态：0-正常，1-封禁
