@@ -1,0 +1,45 @@
+server:
+  port: 8081
+
+spring:
+  profiles:
+    active: dev
+#  datasource:
+#    driver-class-name: ${sky.datasource.driver-class-name}
+#    url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}
+#    username: ${sky.datasource.username}
+#    password: ${sky.datasource.password}
+
+mybatis-flex:
+  datasource:
+    driver-class-name: ${sky.datasource.driver-class-name}
+  global-config:
+    print-banner: true
+    logic-delete-column: isDelete
+    logic-delete-value: 1
+    logic-not-delete-value: 0
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  admin-config:
+    enable: true
+    endpoint: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}
+    secret-key: ${sky.datasource.password}
+  # 分页插件配置
+  pagehelper:
+    helper-dialect: mysql   # 数据库方言
+    reasonable: true
+    support-methods-arguments: true
+    params: count=countSql
+
+knife4j:
+  enable: true
+  setting:
+    language: zh-CN
+  openapi:
+    title: 匹配系统接口文档
+    group:
+      default:
+        group-name: 默认分组
+        api-rule: package
+        api-rule-resources:
+          - com.rngad33.yxpei.controller
