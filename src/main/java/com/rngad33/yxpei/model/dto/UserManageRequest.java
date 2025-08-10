@@ -1,4 +1,4 @@
-package com.rngad33.yxpei.model.dto.user;
+package com.rngad33.yxpei.model.dto;
 
 import lombok.Data;
 import java.io.Serializable;

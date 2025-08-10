@@ -1,17 +1,15 @@
-package com.rngad33.yxpei.model.dto.user;
+package com.rngad33.yxpei.model.dto;
 
-import com.rngad33.yxpei.common.PageRequest;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 用户查询请求体
+ * 用户更新请求体
  */
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class UserQueryRequest extends PageRequest implements Serializable {
+public class UserUpdateRequest implements Serializable {
 
     /**
      * 用户 id
@@ -29,6 +27,21 @@ public class UserQueryRequest extends PageRequest implements Serializable {
     private Integer role;
 
     /**
+     * 头像地址
+     */
+    private String avatarUrl;
+
+    /**
+     * 性别
+     */
+    private Integer gender;
+
+    /**
+     * 密码
+     */
+    private String userPassword;
+
+    /**
      * 电话
      */
     private String phone;
@@ -42,6 +55,11 @@ public class UserQueryRequest extends PageRequest implements Serializable {
      * 用户状态：0-正常，1-封禁
      */
     private Integer userStatus;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
 
     private static final long serialVersionUID = 3191241716373120793L;
 

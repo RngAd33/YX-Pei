@@ -2,7 +2,8 @@ package com.rngad33.yxpei.service;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
-import com.rngad33.yxpei.model.dto.user.*;
+import com.rngad33.yxpei.model.dto.UserAddRequest;
+import com.rngad33.yxpei.model.dto.UserQueryRequest;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.model.vo.UserVO;
 import jakarta.servlet.http.HttpServletRequest;

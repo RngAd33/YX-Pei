@@ -10,7 +10,7 @@ import com.rngad33.yxpei.constant.ErrorConstant;
 import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.manager.UserManager;
-import com.rngad33.yxpei.model.dto.user.*;
+import com.rngad33.yxpei.model.dto.*;
 import com.rngad33.yxpei.utils.AESUtils;
 import com.rngad33.yxpei.utils.SpecialCharValidator;
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;

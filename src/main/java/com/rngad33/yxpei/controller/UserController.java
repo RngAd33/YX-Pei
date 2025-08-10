@@ -5,7 +5,7 @@ import com.rngad33.yxpei.annotation.AuthCheck;
 import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.common.BaseResponse;
-import com.rngad33.yxpei.model.dto.user.*;
+import com.rngad33.yxpei.model.dto.*;
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
 import com.rngad33.yxpei.manager.UserManager;
 import com.rngad33.yxpei.model.entity.User;
@@ -146,7 +146,7 @@ public class UserController {
     }
 
     /**
-     * 分页获取用户列表
+     * 分页查询用户列表
      *
      * @param userQueryRequest 用户查询请求对象
      * @return userVOPage

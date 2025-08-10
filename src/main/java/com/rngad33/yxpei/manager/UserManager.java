@@ -4,7 +4,7 @@ import com.rngad33.yxpei.constant.AESConstant;
 import com.rngad33.yxpei.constant.ErrorConstant;
 import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.model.enums.user.UserRoleEnum;
-import com.rngad33.yxpei.model.dto.user.UserManageRequest;
+import com.rngad33.yxpei.model.dto.UserManageRequest;
 import com.rngad33.yxpei.model.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
