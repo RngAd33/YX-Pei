@@ -1,5 +1,6 @@
 package com.rngad33.yxpei.controller;
 
+import cn.hutool.core.util.ObjUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.rngad33.yxpei.annotation.AuthCheck;
 import com.rngad33.yxpei.constant.UserConstant;
@@ -44,9 +45,7 @@ public class UserController {
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest)
             throws Exception {
-        if (userRegisterRequest == null) {
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
+        ThrowUtils.throwIf(ObjUtil.isNull(userRegisterRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         String userName = userRegisterRequest.getUserName();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
@@ -68,9 +67,7 @@ public class UserController {
     @PostMapping("/login")
     public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest,
                                         HttpServletRequest request) throws Exception {
-        if (userLoginRequest == null) {
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
+        ThrowUtils.throwIf(ObjUtil.isNull(userLoginRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         String userName = userLoginRequest.getUserName();
         String userPassword = userLoginRequest.getUserPassword();
         // 校验参数
@@ -101,9 +98,7 @@ public class UserController {
      */
     @PostMapping("/logout")
     public BaseResponse<Integer> userLogout(HttpServletRequest request) {
-        if (request == null) {
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
+        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
         Integer result = userService.userLogout(request);
         return ResultUtils.success(result);
     }
@@ -116,6 +111,7 @@ public class UserController {
      */
     @GetMapping("/search")
     public BaseResponse<List<User>> searchUsers(String userName, HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
         List<User> users = userService.searchUsers(userName, request);
         return ResultUtils.success(users);
     }
@@ -126,7 +122,7 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @GetMapping("/get")
     public BaseResponse<User> getUserById(long id) {
-        ThrowUtils.throwIf(id <= 0, ErrorCodeEnum.PARAMS_ERROR);
+        ThrowUtils.throwIf(id <= 0, ErrorCodeEnum.PARAMS_ERROR, "id无效！");
         User user = userService.getById(id);
         ThrowUtils.throwIf(user == null, ErrorCodeEnum.NO_PARAMS);
         return ResultUtils.success(user);
@@ -140,6 +136,7 @@ public class UserController {
      */
     @GetMapping("/get/vo")
     public BaseResponse<UserVO> getUserVOById(long id) {
+        ThrowUtils.throwIf(id <= 0, ErrorCodeEnum.PARAMS_ERROR, "id无效！");
         BaseResponse<User> response = getUserById(id);
         User user = response.getData();
         return ResultUtils.success(userService.getUserVO(user));
@@ -153,7 +150,7 @@ public class UserController {
      */
     @GetMapping("/list/page")
     public BaseResponse<Page<UserVO>> listUsersByPage(@RequestBody UserQueryRequest userQueryRequest) {
-        ThrowUtils.throwIf(userQueryRequest == null, ErrorCodeEnum.PARAMS_ERROR);
+        ThrowUtils.throwIf(ObjUtil.isNull(userQueryRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         long current = userQueryRequest.getCurrent();
         long pageSize = userQueryRequest.getPageSize();
         Page<User> userPage = userService.page(new Page<>(current, pageSize),
@@ -174,7 +171,7 @@ public class UserController {
     @PostMapping("/admin/add")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addUser(@RequestBody UserAddRequest userAddRequest) throws Exception {
-        ThrowUtils.throwIf(userAddRequest == null, ErrorCodeEnum.PARAMS_ERROR);
+        ThrowUtils.throwIf(ObjUtil.isNull(userAddRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         return ResultUtils.success(userService.addUser(userAddRequest));
     }
 
@@ -189,10 +186,9 @@ public class UserController {
     @PostMapping("/admin/ban")
     public BaseResponse<Integer> userOrBan(@RequestBody UserManageRequest userManageRequest,
                                            HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjUtil.isNull(userManageRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         Long id = userManager.getId(userManageRequest, request);
-        if (id == null) {
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
+        ThrowUtils.throwIf(ObjUtil.isNull(id), ErrorCodeEnum.PARAMS_ERROR, "id无效！");
         Integer result = userService.userOrBan(id, request);
         return ResultUtils.success(result);
     }
@@ -205,10 +201,11 @@ public class UserController {
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @PostMapping("/admin/delete")
-    public BaseResponse<Boolean> userDelete(@RequestBody UserManageRequest userManageRequest,
-                                            HttpServletRequest request) {
-        Long id = userManager.getId(userManageRequest, request);
-        ThrowUtils.throwIf(id == null, ErrorCodeEnum.USER_LOSE_ACTION);
+    public BaseResponse<Boolean> userDelete(@RequestBody UserManageRequest userManageRequest) {
+        if (userManageRequest == null || userManageRequest.getId() == null) {
+            throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
+        }
+        Long id = userManageRequest.getId();
         boolean result = userService.removeById(id);   // 无需业务层
         ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION);
         return ResultUtils.success(true);
