@@ -12,6 +12,7 @@ import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.manager.UserManager;
 import com.rngad33.yxpei.model.dto.*;
 import com.rngad33.yxpei.utils.AESUtils;
+import com.rngad33.yxpei.utils.LockUtils;
 import com.rngad33.yxpei.utils.SpecialCharValidator;
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
 import com.rngad33.yxpei.model.enums.user.UserStatusEnum;
@@ -74,7 +75,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 单机锁
-        synchronized (userName.intern()) {
+        synchronized (LockUtils.getKeyLock(userName)) {
             // 2. 账户信息查重
             log.info("正在执行信息查重……");
             // - 名称查重
