@@ -86,6 +86,7 @@ public class UserController {
      */
     @GetMapping("/current")
     public BaseResponse<User> getCurrentUser(HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
         User user = userService.getCurrentUser(request);
         return ResultUtils.success(user);
     }

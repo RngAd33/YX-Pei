@@ -7,6 +7,7 @@ import com.rngad33.yxpei.model.enums.user.UserRoleEnum;
 import com.rngad33.yxpei.model.dto.UserManageRequest;
 import com.rngad33.yxpei.model.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -15,7 +16,7 @@ import java.util.Objects;
 /**
  * 通用用户操作
  */
-@Service
+@Component
 public class UserManager {
 
     /**

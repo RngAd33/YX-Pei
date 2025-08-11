@@ -54,8 +54,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 新账户id
      */
     @Override
-    public Long userRegister(String userName, String userPassword, String checkPassword)
-            throws Exception {
+    public Long userRegister(String userName, String userPassword, String checkPassword) throws Exception {
         // 1. 信息校验
         log.info("正在执行信息校验……");
         // - 长度限制
