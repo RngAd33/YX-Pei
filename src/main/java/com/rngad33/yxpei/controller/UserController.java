@@ -151,7 +151,7 @@ public class UserController {
      * @param tags
      * @return
      */
-    @GetMapping("/get/tags/vo")
+    @GetMapping("/get/tags/")
     public BaseResponse<List<User>> getUserByTags(List<String> tags) {
         ThrowUtils.throwIf(CollectionUtils.isEmpty(tags), ErrorCodeEnum.NO_PARAMS, "标签列表为空！");
         return ResultUtils.success(userService.searchUsersByTags(tags));
@@ -163,7 +163,7 @@ public class UserController {
      * @param userQueryRequest 用户查询请求对象
      * @return userVOPage
      */
-    @GetMapping("/list/page")
+    @PostMapping("/list/page")
     public BaseResponse<Page<UserVO>> listUsersByPage(@RequestBody UserQueryRequest userQueryRequest) {
         ThrowUtils.throwIf(ObjUtil.isNull(userQueryRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         long current = userQueryRequest.getCurrent();

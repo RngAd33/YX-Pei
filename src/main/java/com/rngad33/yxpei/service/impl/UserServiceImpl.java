@@ -222,7 +222,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         for (String tag : tags) {
             queryWrapper = queryWrapper.like("tags", tag);
         }
+        // 查询所有用户
         List<User> userList = userMapper.selectListByQuery(queryWrapper);
+        // 在内存中筛选出带有目标标签的用户
+
         return userList.stream()
                 .filter(user -> !Objects.equals(user.getRole(), UserConstant.ADMIN_ROLE))   // 过滤管理员账户
                 .map(userManager::getSafeUser)   // 信息脱敏

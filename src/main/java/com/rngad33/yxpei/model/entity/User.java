@@ -1,10 +1,10 @@
 package com.rngad33.yxpei.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.mybatisflex.annotation.*;
 import com.mybatisflex.core.mask.Masks;
 import lombok.Data;
 
-import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -12,7 +12,8 @@ import java.util.Date;
  */
 @Data
 @Table("user")
-public class User implements Serializable {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class User {
 
     /**
      * 用户 id
@@ -82,8 +83,5 @@ public class User implements Serializable {
      */
     @Column(isLogicDelete = true)
     private Integer isDelete;
-
-    @Column
-    private static final long serialVersionUID = 3191241716373120793L;
 
 }
