@@ -1,9 +1,9 @@
 package com.rngad33.yxpei.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.thread.lock.LockUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.rngad33.yxpei.constant.AESConstant;
@@ -192,7 +192,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 用户模糊查询
+     * 用户模糊查询（基于用户名）
      *
      * @param userName 用户名
      * @return 用户列表
@@ -206,10 +206,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         List<User> userList = this.list(queryWrapper);
         return userList.stream()
                 .filter(user -> !Objects.equals(user.getRole(), UserConstant.ADMIN_ROLE))   // 过滤管理员账户
-                .map(user -> {
-                    user.setUserPassword(AESConstant.CONFUSION);   // 密码保护
-                    return user;
-                }).collect(Collectors.toList());
+                .map(userManager::getSafeUser)   // 信息脱敏
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 根据标签查询用户
+     *
+     * @param tags
+     * @return
+     */
+    @Override
+    public List<User> searchUsersByTags(List<String> tags) {
+        QueryWrapper queryWrapper = new QueryWrapper();
+        for (String tag : tags) {
+            queryWrapper = queryWrapper.like("tags", tag);
+        }
+        List<User> userList = userMapper.selectListByQuery(queryWrapper);
+        return userList.stream()
+                .filter(user -> !Objects.equals(user.getRole(), UserConstant.ADMIN_ROLE))   // 过滤管理员账户
+                .map(userManager::getSafeUser)   // 信息脱敏
+                .collect(Collectors.toList());
     }
 
     /**

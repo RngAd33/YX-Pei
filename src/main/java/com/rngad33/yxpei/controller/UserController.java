@@ -1,6 +1,9 @@
 package com.rngad33.yxpei.controller;
 
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
+import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.mybatisflex.core.paginate.Page;
 import com.rngad33.yxpei.annotation.AuthCheck;
 import com.rngad33.yxpei.constant.UserConstant;
@@ -99,26 +102,25 @@ public class UserController {
      */
     @PostMapping("/logout")
     public BaseResponse<Integer> userLogout(HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
         Integer result = userService.userLogout(request);
         return ResultUtils.success(result);
     }
 
     /**
-     * 用户模糊查询
+     * 用户模糊查询（基于用户名）
      *
      * @param userName 用户名
      * @return 用户列表
      */
     @GetMapping("/search")
     public BaseResponse<List<User>> searchUsers(String userName, HttpServletRequest request) {
-        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
+        ThrowUtils.throwIf(ObjUtil.isNull(userName), ErrorCodeEnum.NO_PARAMS, "用户名不能为空！");
         List<User> users = userService.searchUsers(userName, request);
         return ResultUtils.success(users);
     }
 
     /**
-     * 根据id获取用户（管理员）
+     * 根据id查询用户（管理员）
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @GetMapping("/get")
@@ -130,7 +132,7 @@ public class UserController {
     }
 
     /**
-     * 根据id获取用户（用户）
+     * 根据id查询用户（用户）
      *
      * @param id
      * @return
@@ -141,6 +143,18 @@ public class UserController {
         BaseResponse<User> response = getUserById(id);
         User user = response.getData();
         return ResultUtils.success(userService.getUserVO(user));
+    }
+
+    /**
+     * 根据标签查询用户（用户）
+     *
+     * @param tags
+     * @return
+     */
+    @GetMapping("/get/tags/vo")
+    public BaseResponse<List<User>> getUserByTags(List<String> tags) {
+        ThrowUtils.throwIf(CollectionUtils.isEmpty(tags), ErrorCodeEnum.NO_PARAMS, "标签列表为空！");
+        return ResultUtils.success(userService.searchUsersByTags(tags));
     }
 
     /**
