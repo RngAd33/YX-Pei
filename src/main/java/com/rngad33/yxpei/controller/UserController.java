@@ -46,8 +46,7 @@ public class UserController {
      * @throws Exception
      */
     @PostMapping("/register")
-    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest)
-            throws Exception {
+    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) throws Exception {
         ThrowUtils.throwIf(ObjUtil.isNull(userRegisterRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         String userName = userRegisterRequest.getUserName();
         String userPassword = userRegisterRequest.getUserPassword();
@@ -151,7 +150,7 @@ public class UserController {
      * @param tags
      * @return
      */
-    @GetMapping("/get/tags/")
+    @GetMapping("/getByTags/")
     public BaseResponse<List<User>> getUserByTags(List<String> tags) {
         ThrowUtils.throwIf(CollectionUtils.isEmpty(tags), ErrorCodeEnum.NO_PARAMS, "标签列表为空！");
         return ResultUtils.success(userService.searchUsersByTags(tags));
