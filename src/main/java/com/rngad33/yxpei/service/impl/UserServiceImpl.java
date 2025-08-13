@@ -3,6 +3,8 @@ package com.rngad33.yxpei.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -200,9 +202,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public List<User> searchUsers(String userName, HttpServletRequest request) {
         QueryWrapper queryWrapper = new QueryWrapper();
-        if (StringUtils.isNotBlank(userName)) {
-            queryWrapper.like("user_name", userName);   // 默认模糊查询
-        }
+        queryWrapper.like("user_name", userName);
         List<User> userList = this.list(queryWrapper);
         return userList.stream()
                 .filter(user -> !Objects.equals(user.getRole(), UserConstant.ADMIN_ROLE))   // 过滤管理员账户
@@ -211,23 +211,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 根据标签查询用户
+     * 根据标签查询用户（基于内存过滤）
      *
      * @param tags
      * @return
      */
     @Override
     public List<User> searchUsersByTags(List<String> tags) {
+        // 1. 查询所有用户
         QueryWrapper queryWrapper = new QueryWrapper();
-        for (String tag : tags) {
-            queryWrapper = queryWrapper.like("tags", tag);
-        }
-        // 查询所有用户
         List<User> userList = userMapper.selectListByQuery(queryWrapper);
-        // 在内存中筛选出带有目标标签的用户
-
+        // 2. 在内存中筛选出带有目标标签的用户（采用语法糖写法）
         return userList.stream()
                 .filter(user -> !Objects.equals(user.getRole(), UserConstant.ADMIN_ROLE))   // 过滤管理员账户
+                .filter(user -> {   // 用户筛选
+                    String tagsStr = user.getTags();
+                    if (StrUtil.isBlank(tagsStr)) {
+                        return false;
+                    }
+                    List<String> tempTags = JSONUtil.toBean(tagsStr, List.class);
+                    for (String tag : tempTags) {
+                        if (!tempTags.contains(tag)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
                 .map(userManager::getSafeUser)   // 信息脱敏
                 .collect(Collectors.toList());
     }
@@ -282,7 +291,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * 用户封禁 / 解封（仅管理员）
      *
-     * @param id 待封禁/解封用户id
+     * @param id 待封禁 / 解封用户id
      * @return 状态码
      */
     @Override

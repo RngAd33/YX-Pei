@@ -114,6 +114,7 @@ public class UserManager {
         safeUser.setUserPassword(AESConstant.CONFUSION);
         safeUser.setPhone(AESConstant.CONFUSION);
         safeUser.setEmail(user.getEmail());
+        safeUser.setTags(user.getTags());
         safeUser.setUserStatus(user.getUserStatus());
         safeUser.setCreateTime(user.getCreateTime());
         safeUser.setUpdateTime(new Date());
