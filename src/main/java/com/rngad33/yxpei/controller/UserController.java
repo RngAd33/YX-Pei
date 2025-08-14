@@ -33,10 +33,10 @@ import java.util.List;
 public class UserController {
 
     @Resource
-    private UserService userService;
+    private UserManager userManager;
 
     @Resource
-    private UserManager userManager;
+    private UserService userService;
 
     /**
      * 用户注册
