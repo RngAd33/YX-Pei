@@ -4,6 +4,7 @@ server:
 spring:
   profiles:
     active: dev
+  # 数据库配置
   datasource:
     driver-class-name: ${sky.datasource.driver-class-name}
     url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}
