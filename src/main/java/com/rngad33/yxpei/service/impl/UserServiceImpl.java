@@ -224,16 +224,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 2. 在内存中筛选出带有目标标签的用户（采用语法糖写法）
         return userList.stream()
                 .filter(user -> !Objects.equals(user.getRole(), UserConstant.ADMIN_ROLE))   // 过滤管理员账户
-                .filter(user -> {   // 用户筛选
+                .filter(user -> {   // 筛选目标标签用户
                     String tagsStr = user.getTags();
-                    if (StrUtil.isBlank(tagsStr)) {
-                        return false;
-                    }
+                    if (StrUtil.isBlank(tagsStr)) return false;
                     List<String> tempTags = JSONUtil.toBean(tagsStr, List.class);
                     for (String tag : tempTags) {
-                        if (!tempTags.contains(tag)) {
-                            return false;
-                        }
+                        if (!tempTags.contains(tag)) return false;
                     }
                     return true;
                 })
