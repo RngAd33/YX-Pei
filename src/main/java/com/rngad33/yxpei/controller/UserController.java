@@ -67,8 +67,8 @@ public class UserController {
      * @throws Exception
      */
     @PostMapping("/login")
-    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest,
-                                        HttpServletRequest request) throws Exception {
+    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request)
+            throws Exception {
         ThrowUtils.throwIf(ObjUtil.isNull(userLoginRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         String userName = userLoginRequest.getUserName();
         String userPassword = userLoginRequest.getUserPassword();
@@ -101,7 +101,9 @@ public class UserController {
      */
     @PostMapping("/logout")
     public BaseResponse<Integer> userLogout(HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
         Integer result = userService.userLogout(request);
+        ThrowUtils.throwIf(result != 0, ErrorCodeEnum.USER_LOSE_ACTION);
         return ResultUtils.success(result);
     }
 
@@ -114,6 +116,7 @@ public class UserController {
     @GetMapping("/search")
     public BaseResponse<List<User>> searchUsers(String userName, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjUtil.isNull(userName), ErrorCodeEnum.NO_PARAMS, "用户名不能为空！");
+        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
         List<User> users = userService.searchUsers(userName, request);
         return ResultUtils.success(users);
     }
@@ -182,8 +185,8 @@ public class UserController {
      * @return
      * @throws Exception
      */
-    @PostMapping("/admin/add")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @PostMapping("/admin/add")
     public BaseResponse<Long> addUser(@RequestBody UserAddRequest userAddRequest) throws Exception {
         ThrowUtils.throwIf(ObjUtil.isNull(userAddRequest), ErrorCodeEnum.USER_LOSE_ACTION, "无效的请求！");
         return ResultUtils.success(userService.addUser(userAddRequest));
@@ -215,7 +218,8 @@ public class UserController {
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @PostMapping("/admin/delete")
-    public BaseResponse<Boolean> userDelete(@RequestBody UserManageRequest userManageRequest) {
+    public BaseResponse<Boolean> userDelete(@RequestBody UserManageRequest userManageRequest,
+                                            HttpServletRequest request) {
         if (userManageRequest == null || userManageRequest.getId() == null) {
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
@@ -233,7 +237,8 @@ public class UserController {
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @PostMapping("/admin/update")
-    public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest) {
+    public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
+                                            HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }

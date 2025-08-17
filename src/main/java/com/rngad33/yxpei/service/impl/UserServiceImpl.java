@@ -167,7 +167,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public User getCurrentUser(HttpServletRequest request) {
-        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        ThrowUtils.throwIf(request == null, ErrorCodeEnum.PARAMS_ERROR);
+        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);   // 关键语句
         User currentUser = (User) userObj;
         if (currentUser == null) {
             throw new MyException(ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
@@ -188,8 +189,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public Integer userLogout(HttpServletRequest request) {
-        // 移除登录态
-        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);   // 移除登录态
         return 0;
     }
 
