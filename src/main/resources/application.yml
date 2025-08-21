@@ -16,10 +16,10 @@ spring:
   # Redis配置
   data:
     redis:
-      database: ${sky.spring.redis.database}
-      host: ${sky.spring.redis.host}
-      port: ${sky.spring.redis.port}
-      timeout: ${sky.spring.redis.timeout}
+      database: ${sky.redis.database}
+      host: ${sky.redis.host}
+      port: ${sky.redis.port}
+      timeout: ${sky.redis.timeout}
 
 mybatis-flex:
   mapper-locations: classpath:mapper/*.xml

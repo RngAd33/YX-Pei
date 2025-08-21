@@ -325,16 +325,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 更新用户信息
      *
      * @param user
-     * @param request
+     * @param loginUser
      * @return
      */
     @Override
-    public Integer updateUser(User user, HttpServletRequest request) {
-
-        // 管理员允许更新所有用户
-
-        // 普通用户只能更新自己的视图信息
-
+    public Integer updateUser(User user, User loginUser) {
+        long id = user.getId();
+        ThrowUtils.throwIf(id <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
+        // 管理员有权更新所有用户，普通用户只能更新自己的视图信息
+        if (userManager.isNotAdmin(loginUser) && id != loginUser.getId()) {
+            throw new MyException(ErrorCodeEnum.USER_NOT_AUTH);
+        }
+        User oldUser = userMapper.selectOneById(id);
+        ThrowUtils.throwIf(oldUser == null, ErrorCodeEnum.NO_PARAMS, "用户不存在！");
         return userMapper.update(user);
     }
 

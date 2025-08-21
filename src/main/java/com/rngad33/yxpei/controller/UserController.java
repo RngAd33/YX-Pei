@@ -232,7 +232,7 @@ public class UserController {
      * @param userUpdateRequest
      * @return
      */
-    @PostMapping("/admin/update")
+    @PostMapping("/update")
     public BaseResponse<Integer> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
                                             HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
@@ -240,7 +240,8 @@ public class UserController {
         }
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
-        Integer result = userService.updateUser(user, request);
+        User loginUser = userService.getCurrentUser(request);
+        Integer result = userService.updateUser(user, loginUser);
         return ResultUtils.success(result);
     }
 
