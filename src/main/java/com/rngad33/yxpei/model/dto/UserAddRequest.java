@@ -58,14 +58,4 @@ public class UserAddRequest{
      */
     private Integer userStatus;
 
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
-
 }

@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserQueryRequest extends PageRequest implements Serializable {
+public class UserQueryRequest extends PageRequest {
 
     /**
      * 用户 id
@@ -44,7 +44,5 @@ public class UserQueryRequest extends PageRequest implements Serializable {
      * 用户状态：0-正常，1-封禁
      */
     private Integer userStatus;
-
-    private static final long serialVersionUID = 3191241716373120793L;
 
 }

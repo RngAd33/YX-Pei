@@ -59,9 +59,4 @@ public class UserUpdateRequest {
      */
     private Integer userStatus;
 
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
-
 }
