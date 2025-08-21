@@ -216,8 +216,7 @@ public class UserController {
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @PostMapping("/admin/delete")
-    public BaseResponse<Boolean> userDelete(@RequestBody UserManageRequest userManageRequest,
-                                            HttpServletRequest request) {
+    public BaseResponse<Boolean> userDelete(@RequestBody UserManageRequest userManageRequest) {
         if (userManageRequest == null || userManageRequest.getId() == null) {
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
@@ -228,23 +227,21 @@ public class UserController {
     }
 
     /**
-     * 用户更新（仅管理员）
+     * 更新用户信息
      *
      * @param userUpdateRequest
      * @return
      */
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @PostMapping("/admin/update")
-    public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
+    public BaseResponse<Integer> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
                                             HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
-        boolean result = userService.updateById(user);
-        ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION);
-        return ResultUtils.success(true);
+        Integer result = userService.updateUser(user, request);
+        return ResultUtils.success(result);
     }
 
 }

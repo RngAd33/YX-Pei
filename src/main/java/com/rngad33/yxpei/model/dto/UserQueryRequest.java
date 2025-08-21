@@ -1,5 +1,6 @@
 package com.rngad33.yxpei.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rngad33.yxpei.common.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -9,8 +10,9 @@ import java.io.Serializable;
 /**
  * 用户查询请求体
  */
-@EqualsAndHashCode(callSuper = true)
 @Data
+@EqualsAndHashCode(callSuper = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserQueryRequest extends PageRequest implements Serializable {
 
     /**

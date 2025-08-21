@@ -91,6 +91,15 @@ public interface UserService extends IService<User> {
     Integer userOrBan(Long id, HttpServletRequest request);
 
     /**
+     * 更新用户信息
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    Integer updateUser(User user, HttpServletRequest request);
+
+    /**
      * 获取单个用户信息
      *
      * @param user

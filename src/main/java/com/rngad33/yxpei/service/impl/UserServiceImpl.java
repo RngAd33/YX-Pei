@@ -126,6 +126,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User userLogin(String userName, String userPassword, HttpServletRequest request) throws Exception {
         // 1. 信息校验
+        ThrowUtils.throwIf(request == null, ErrorCodeEnum.PARAMS_ERROR, "HTTP请求无效！");
         // - 账户名称不能包含特殊字符
         if (SpecialCharValidator.doValidate(userName)) {
             log.error(ErrorConstant.USER_HAVE_SPECIAL_CHAR_MESSAGE);
@@ -167,7 +168,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public User getCurrentUser(HttpServletRequest request) {
-        ThrowUtils.throwIf(request == null, ErrorCodeEnum.PARAMS_ERROR);
+        ThrowUtils.throwIf(request == null, ErrorCodeEnum.PARAMS_ERROR, "HTTP请求无效！");
         Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);   // 关键语句
         User currentUser = (User) userObj;
         if (currentUser == null) {
@@ -287,7 +288,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * 用户封禁 / 解封（仅管理员）
      *
-     * @param id 待封禁 / 解封用户id
+     * @param id 待操作用户id
      * @return 状态码
      */
     @Override
@@ -321,10 +322,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
+     * 更新用户信息
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    public Integer updateUser(User user, HttpServletRequest request) {
+
+        // 管理员允许更新所有用户
+
+        // 普通用户只能更新自己的视图信息
+
+        return userMapper.update(user);
+    }
+
+    /**
      * 获取单个用户信息
      *
      * @param user
-     * @return
+     * @return 用户视图
      */
     @Override
     public UserVO getUserVO(User user) {
@@ -340,7 +358,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 获取用户列表
      *
      * @param userList
-     * @return
+     * @return 用户视图列表
      */
     @Override
     public List<UserVO> getUserVOList(List<User> userList) {
