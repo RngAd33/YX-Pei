@@ -3,6 +3,7 @@ package com.rngad33.yxpei.controller;
 import cn.hutool.core.util.ObjUtil;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.rngad33.yxpei.annotation.AuthCheck;
 import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.exception.MyException;
@@ -244,5 +245,18 @@ public class UserController {
         Integer result = userService.updateUser(user, loginUser);
         return ResultUtils.success(result);
     }
+
+//    /**
+//     * 推荐用户
+//     *
+//     * @param request
+//     * @return
+//     */
+//    @PostMapping("/recommend")
+//    public BaseResponse<List<User>> recommendUsers(HttpServletRequest request) {
+//        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
+//        // List<User> users = userService.list(new QueryWrapper());
+//        return ResultUtils.success(users);
+//    }
 
 }
