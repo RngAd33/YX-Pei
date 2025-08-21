@@ -1,8 +1,6 @@
 package com.rngad33.yxpei.controller;
 
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONUtil;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.mybatisflex.core.paginate.Page;
 import com.rngad33.yxpei.annotation.AuthCheck;
@@ -224,7 +222,7 @@ public class UserController {
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
         Long id = userManageRequest.getId();
-        boolean result = userService.removeById(id);   // 无需业务层
+        boolean result = userService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION);
         return ResultUtils.success(true);
     }
