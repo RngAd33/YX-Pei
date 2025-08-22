@@ -5,19 +5,23 @@ import com.rngad33.yxpei.mapper.UserMapper;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.service.UserService;
 import jakarta.annotation.Resource;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 批量插入用户数据
+ * 该测试类用于向数据库批量插入数据
  */
-public class InsertUsers {
+@SpringBootTest
+class InsertUsersTest {
 
     @Resource
     private UserService userService;
 
-    public void insertUsers() {
+    @Test
+    void doInsert() {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         final int INSERT_NUM = 1000;
