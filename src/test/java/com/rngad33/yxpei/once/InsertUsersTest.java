@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 
 /**
  * 该测试类用于向数据库批量插入数据
@@ -20,6 +20,10 @@ class InsertUsersTest {
 
     @Resource
     private UserService userService;
+
+    // 自定义线程池
+    private final ExecutorService executorService = new ThreadPoolExecutor(60, 1000, 10000,
+            TimeUnit.MINUTES, new ArrayBlockingQueue<>(10000));
 
     /**
      * 线式
@@ -55,11 +59,11 @@ class InsertUsersTest {
     void doInsert2() {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        final int INSERT_NUM = 1000;
+        final int INSERT_NUM = 2000;
         int j = 0;
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        // 分10组
-        for (int i = 0; i < 10; i++) {
+        // 分20个线程
+        for (int i = 0; i < 20; i++) {
             List<User> users = new ArrayList<>();
             do {
                 j++;
@@ -78,7 +82,7 @@ class InsertUsersTest {
             // 异步执行
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 userService.saveBatch(users, 100);
-            });
+            }, executorService);
             futures.add(future);
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).join();   // 阻塞
