@@ -74,7 +74,7 @@ class InsertUsersTest {
                 user.setUserStatus(0);
                 user.setRole(0);
                 users.add(user);
-            } while (j % 10000 != 0);
+            } while (j % INSERT_NUM != 0);
             // 异步执行
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 userService.saveBatch(users, 100);
