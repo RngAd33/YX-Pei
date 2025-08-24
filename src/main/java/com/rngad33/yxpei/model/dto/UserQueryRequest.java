@@ -5,8 +5,6 @@ import com.rngad33.yxpei.common.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
-
 /**
  * 用户查询请求体
  */

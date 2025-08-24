@@ -3,9 +3,6 @@ package com.rngad33.yxpei.model.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.Date;
-
 /**
  * 用户添加请求体
  */

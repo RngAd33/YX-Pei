@@ -1,8 +1,6 @@
 package com.rngad33.yxpei.once;
 
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.mybatisflex.annotation.Id;
-import com.mybatisflex.annotation.KeyType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

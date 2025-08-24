@@ -1,7 +1,6 @@
 package com.rngad33.yxpei.once;
 
 import cn.hutool.core.date.StopWatch;
-import com.rngad33.yxpei.mapper.UserMapper;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.service.UserService;
 import jakarta.annotation.Resource;

@@ -1,8 +1,9 @@
 package com.rngad33.yxpei.common;
 
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
-import java.io.Serializable;
 import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * 通用返回类

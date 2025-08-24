@@ -3,23 +3,26 @@ package com.rngad33.yxpei.controller;
 import cn.hutool.core.util.ObjUtil;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryWrapper;
 import com.rngad33.yxpei.annotation.AuthCheck;
+import com.rngad33.yxpei.common.BaseResponse;
 import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.exception.MyException;
-import com.rngad33.yxpei.common.BaseResponse;
-import com.rngad33.yxpei.model.dto.*;
-import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
+import com.rngad33.yxpei.manager.MyCacheManager;
 import com.rngad33.yxpei.manager.UserManager;
+import com.rngad33.yxpei.model.dto.*;
 import com.rngad33.yxpei.model.entity.User;
+import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
 import com.rngad33.yxpei.model.vo.UserVO;
 import com.rngad33.yxpei.service.UserService;
 import com.rngad33.yxpei.utils.ResultUtils;
 import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,15 +30,22 @@ import java.util.List;
 /**
  * 用户接口
  */
+@Slf4j
 @RestController
 @RequestMapping("/user")
 public class UserController {
+
+    @Resource
+    private MyCacheManager myCacheManager;
 
     @Resource
     private UserManager userManager;
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private RedisTemplate redisTemplate;
 
     /**
      * 用户注册
@@ -246,17 +256,32 @@ public class UserController {
         return ResultUtils.success(result);
     }
 
-//    /**
-//     * 推荐用户
-//     *
-//     * @param request
-//     * @return
-//     */
-//    @PostMapping("/recommend")
-//    public BaseResponse<List<User>> recommendUsers(HttpServletRequest request) {
-//        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
-//        // List<User> users = userService.list(new QueryWrapper());
-//        return ResultUtils.success(users);
-//    }
+    /**
+     * 推荐用户
+     *
+     * @param pageNum
+     * @param pageSize
+     * @param request
+     * @return
+     */
+    @GetMapping("/recommend")
+    public BaseResponse<Page<User>> recommendUsers(long pageNum, long pageSize, HttpServletRequest request) {
+        if (pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request)) {
+            throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
+        }
+        User loginUser = userService.getCurrentUser(request);
+        ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
+        // 优先查询缓存
+        String redisKey = String.format("yxpei:user:recommend:%s", loginUser.getId());
+        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
+        Page<User> userPage = (Page<User>) valueOps.get(redisKey);
+        if (ObjUtil.isNotNull(userPage)) {
+            // 缓存命中
+            return ResultUtils.success(userPage);
+        }
+        // 缓存未命中，查询数据库并写入缓存
+        myCacheManager.writeCacheFromSql(redisKey, valueOps);
+        return ResultUtils.success(userPage);
+    }
 
 }
