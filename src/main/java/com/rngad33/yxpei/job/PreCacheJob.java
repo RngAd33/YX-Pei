@@ -25,7 +25,7 @@ public class PreCacheJob {
     /**
      * 预热推荐用户（每天执行）
      */
-    @Scheduled(cron = "0 59 23 * * ? *")
+    @Scheduled(cron = "0 59 23 * * *")
     public void doPreCacheRecommendUser() {
         for (Long id : mainUserList) {
             myCacheManager.writeCacheFromSql(id);
