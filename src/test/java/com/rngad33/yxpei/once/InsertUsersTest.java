@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -62,7 +63,7 @@ class InsertUsersTest {
         final int INSERT_NUM = 2000;
         int j = 0;
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        // 分20个线程
+        // 分10个线程
         for (int i = 0; i < 10; i++) {
             List<User> users = new ArrayList<>();
             do {
@@ -86,7 +87,7 @@ class InsertUsersTest {
             futures.add(future);
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).join();   // 阻塞
-        stopWatch.stop();   // 任务完成后才执行
+        stopWatch.stop();   // 任务完成后才执行此句
         System.out.println(stopWatch.getTotalTimeMillis());
     }
 

@@ -4,20 +4,24 @@ import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Redis测试类
+ */
 @SpringBootTest
 class RedisTests {
 
     @Resource
-    private RedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
     @Test
     public void redisTest() {
         // 获取redis操作对象
-        ValueOperations<String, String> valueOps = redisTemplate.opsForValue();
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
 
         // 设置模拟数据
         String key = "testKey";
@@ -40,7 +44,7 @@ class RedisTests {
         assertEquals(updateValue, storedValue, "——！查询的值与预期不一致！——");
 
         // 删除测试
-        redisTemplate.delete(key);
+        stringRedisTemplate.delete(key);
         storedValue = valueOps.get(key);
         assertNull(storedValue, "——！删除失败！——");
 
