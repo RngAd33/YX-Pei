@@ -23,12 +23,12 @@ public class PreCacheJob {
     private List<Long> mainUserList = Arrays.asList(1L);
 
     /**
-     * 预热推荐用户（每天执行）
+     * 预热推荐用户（每天23:59执行）
      */
     @Scheduled(cron = "0 59 23 * * *")
     public void doPreCacheRecommendUser() {
         for (Long id : mainUserList) {
-            myCacheManager.writeCacheFromSql(id);
+            myCacheManager.writeRedisFromSql(id);
         }
     }
 

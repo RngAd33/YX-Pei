@@ -2,6 +2,7 @@ package com.rngad33.yxpei;
 
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -20,6 +21,9 @@ class RedisTests {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     @Test
     public void redisTest1() {
@@ -82,6 +86,33 @@ class RedisTests {
         // 删除测试
         stringRedisTemplate.delete(key);
         storedValue = valueOps.get(key);
+        assertNull(storedValue, "——！删除失败！——");
+
+        System.out.println("测试结束，运行正常>>>");
+    }
+
+    @Test
+    public void redissonTest() {
+        // 设置模拟数据
+        String key = "testKey";
+        String value = "testValue";
+
+        // 增
+        redissonClient.getBucket(key).set(value);
+
+        // 查
+        String storedValue = (String) redissonClient.getBucket(key).get();
+        assertEquals(value, storedValue, "——！存储的值与预期不一致！——");
+
+        // 改
+        String updateValue = "updatedValue";
+        redissonClient.getBucket(key).set(updateValue);
+        storedValue = (String) redissonClient.getBucket(key).get();
+        assertEquals(updateValue, storedValue, "——！更新后的值与预期不一致！——");
+
+        // 删
+        redissonClient.getBucket(key).delete();
+        storedValue = (String) redissonClient.getBucket(key).get();
         assertNull(storedValue, "——！删除失败！——");
 
         System.out.println("测试结束，运行正常>>>");

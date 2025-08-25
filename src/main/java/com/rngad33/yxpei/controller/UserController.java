@@ -257,7 +257,7 @@ public class UserController {
     }
 
     /**
-     * 推荐用户
+     * 用户推荐
      *
      * @param pageNum
      * @param pageSize
@@ -280,7 +280,7 @@ public class UserController {
             return ResultUtils.success(userPage);
         }
         // 缓存未命中，查询数据库并写入缓存
-        myCacheManager.writeCacheFromSql(redisKey, valueOps);
+        myCacheManager.writeRedisFromSql(redisKey, valueOps);
         return ResultUtils.success(userPage);
     }
 

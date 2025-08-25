@@ -1,11 +1,14 @@
 package com.rngad33.yxpei.manager;
 
+import cn.hutool.bloomfilter.bitMap.BitMap;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
@@ -24,14 +27,17 @@ public class MyCacheManager {
     private RedisTemplate<String, Object> redisTemplate;
 
     @Resource
+    private RedissonClient redissonClient;
+
+    @Resource
     private UserService userService;
 
     /**
-     * 缓存写入
+     * 缓存写入（基于Redis）
      *
      * @param id
      */
-    public void writeCacheFromSql(Long id) {
+    public void writeRedisFromSql(Long id) {
         String redisKey = String.format("yxpei:user:recommend:%s", id);
         ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
         // 查询数据库
@@ -46,18 +52,56 @@ public class MyCacheManager {
     }
 
     /**
-     * 缓存写入
+     * 缓存写入（基于Redis）
      *
      * @param redisKey
      * @param valueOps
      */
-    public void writeCacheFromSql(String redisKey, ValueOperations<String, Object> valueOps) {
+    public void writeRedisFromSql(String redisKey, ValueOperations<String, Object> valueOps) {
         // 查询数据库
         QueryWrapper queryWrapper = new QueryWrapper();
         Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
         // 写缓存
         try {
             valueOps.set(redisKey, userPage, 60 + new Random().nextInt(50), TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("! Redis set key error: ", e.getMessage());
+        }
+    }
+
+    /**
+     * 缓存写入（基于Redisson）
+     *
+     * @param id
+     */
+    public void writeRedissonFromSql(Long id) {
+        String redisKey = String.format("yxpei:user:recommend:%s", id);
+        // 查询数据库
+        QueryWrapper queryWrapper = new QueryWrapper();
+        Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
+        // 写缓存
+        try {
+            RBucket<Page<User>> bucket = redissonClient.getBucket(redisKey);
+            bucket.set(userPage, 60 + new Random().nextInt(50), TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("! Redis set key error: ", e.getMessage());
+        }
+    }
+
+    /**
+     * 缓存写入（基于Redisson）
+     *
+     * @param redisKey
+     * @param valueOps
+     */
+    public void writeRedissonFromSql(String redisKey, ValueOperations<String, Object> valueOps) {
+        // 查询数据库
+        QueryWrapper queryWrapper = new QueryWrapper();
+        Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
+        // 写缓存
+        try {
+            RBucket<Page<User>> bucket = redissonClient.getBucket(redisKey);
+            bucket.set(userPage, 60 + new Random().nextInt(50), TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("! Redis set key error: ", e.getMessage());
         }
