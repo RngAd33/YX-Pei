@@ -1,6 +1,5 @@
 package com.rngad33.yxpei.manager;
 
-import cn.hutool.bloomfilter.bitMap.BitMap;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.rngad33.yxpei.model.entity.User;
@@ -39,13 +38,13 @@ public class MyCacheManager {
      */
     public void writeRedisFromSql(Long id) {
         String redisKey = String.format("yxpei:user:recommend:%s", id);
-        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
         // 查询数据库
         QueryWrapper queryWrapper = new QueryWrapper();
         Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
         // 写缓存
         try {
-            valueOps.set(redisKey, userPage, 60 + new Random().nextInt(50), TimeUnit.SECONDS);
+            redisTemplate.opsForValue()
+                    .set(redisKey, userPage, 60 + new Random().nextInt(50), TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("! Redis set key error: ", e.getMessage());
         }
