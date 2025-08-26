@@ -30,9 +30,9 @@ import java.util.List;
 /**
  * 用户接口
  */
-@Slf4j
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class UserController {
 
     @Resource

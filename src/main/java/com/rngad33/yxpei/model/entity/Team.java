@@ -10,7 +10,7 @@ import java.util.List;
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Space {
+public class Team {
 
     /**
      * 空间id
