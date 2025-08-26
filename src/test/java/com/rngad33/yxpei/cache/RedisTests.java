@@ -1,4 +1,4 @@
-package com.rngad33.yxpei;
+package com.rngad33.yxpei.cache;
 
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
@@ -92,53 +92,6 @@ class RedisTests {
         assertNull(storedValue, "——！删除失败！——");
 
         System.out.println("测试结束，运行正常>>>");
-    }
-
-    @Test
-    public void redissonTest() {
-        // 设置模拟数据
-        String key = "testKey";
-        String value = "testValue";
-
-        // 增
-        redissonClient.getBucket(key).set(value);
-
-        // 查
-        String storedValue = (String) redissonClient.getBucket(key).get();
-        assertEquals(value, storedValue, "——！存储的值与预期不一致！——");
-
-        // 改
-        String updateValue = "updatedValue";
-        redissonClient.getBucket(key).set(updateValue);
-        storedValue = (String) redissonClient.getBucket(key).get();
-        assertEquals(updateValue, storedValue, "——！更新后的值与预期不一致！——");
-
-        // 删
-        redissonClient.getBucket(key).delete();
-        storedValue = (String) redissonClient.getBucket(key).get();
-        assertNull(storedValue, "——！删除失败！——");
-
-        System.out.println("测试结束，运行正常>>>");
-    }
-
-    @Test
-    void testWatchDog() {
-        RLock lock = redissonClient.getLock("yxpei:precachejob:docache:lock");
-        try {
-            // 只有一个线程能获取到锁
-            if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
-                // todo 实际要执行的方法
-                System.out.println("getLock: " + Thread.currentThread().getId());
-            }
-        } catch (InterruptedException e) {
-            System.out.println(e.getMessage());
-        } finally {
-            // 只能释放自己的锁
-            if (lock.isHeldByCurrentThread()) {
-                System.out.println("unLock: " + Thread.currentThread().getId());
-                lock.unlock();
-            }
-        }
     }
 
 }

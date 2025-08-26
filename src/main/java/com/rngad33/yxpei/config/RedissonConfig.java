@@ -21,17 +21,19 @@ public class RedissonConfig {
      */
     @Bean
     public RedissonClient redissonClient(RedisProperties redisProperties) {
+        // 创建配置
         Config config = new Config();
-        // 构建Redis连接地址
-        String address = "redis://" + redisProperties.getHost() + ":" + redisProperties.getPort();
-        // 配置Redisson连接
+        // - 构建Redis连接地址
+        String redisAddress = "redis://" + redisProperties.getHost() + ":" + redisProperties.getPort();
+        // - 配置Redisson连接（暂不使用集群）
         config.useSingleServer()
-                .setAddress(address)
+                .setAddress(redisAddress)
                 .setDatabase(redisProperties.getDatabase());
-        // 如果有密码则设置密码
+        // - 如果有密码则设置密码
         if (redisProperties.getPassword() != null) {
             config.useSingleServer().setPassword(redisProperties.getPassword());
         }
+        // 创建并返回Redisson实例
         return Redisson.create(config);
     }
 

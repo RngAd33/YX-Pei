@@ -54,7 +54,7 @@
             <groupId>org.springframework.session</groupId>
             <artifactId>spring-session-data-redis</artifactId>
         </dependency>
-        <!-- Redisson 布隆过滤器 -->
+        <!-- Redisson -->
         <!-- https://mvnrepository.com/artifact/org.redisson/redisson -->
         <dependency>
             <groupId>org.redisson</groupId>
