@@ -30,14 +30,9 @@ public class TeamEditRequest {
     private Integer maxNum;
 
     /**
-     * 创建人（队长）
+     * 创建人id（队长）
      */
     private User leaderId;
-
-//    /**
-//     * 成员表
-//     */
-//    private List<User> users;
 
     /**
      * 是否需要队长审批？0-不需要，1-需要

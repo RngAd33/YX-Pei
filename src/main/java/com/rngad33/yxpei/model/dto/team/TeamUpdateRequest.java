@@ -44,11 +44,6 @@ public class TeamUpdateRequest {
     private User leader;
 
     /**
-     * 成员表
-     */
-    private List<User> users;
-
-    /**
      * 是否需要队长审批？0-不需要，1-需要
      */
     private Integer needApproval;
@@ -57,6 +52,11 @@ public class TeamUpdateRequest {
      * 开放状态？0-公开，1-私有，2-加密
      */
     private Integer status;
+
+    /**
+     * 加入密码
+     */
+    private String teamPassword;
 
     /**
      * 创建时间

@@ -49,11 +49,6 @@ public class Team {
      */
     private Long leaderId;
 
-//    /**
-//     * 成员表
-//     */
-//    private List<User> users;
-
     /**
      * 是否需要队长审批？0-不需要，1-需要
      */

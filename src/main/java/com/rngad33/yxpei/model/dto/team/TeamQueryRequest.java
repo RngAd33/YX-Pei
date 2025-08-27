@@ -17,8 +17,8 @@ public class TeamQueryRequest {
     private String teamName;
 
     /**
-     * 创建人（队长）
+     * 创建人id（队长）
      */
-    private User leader;
+    private Long leaderId;
 
 }
