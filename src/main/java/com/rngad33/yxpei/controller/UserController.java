@@ -20,9 +20,8 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,7 +44,7 @@ public class UserController {
     private UserService userService;
 
     @Resource
-    private RedisTemplate redisTemplate;
+    private RedissonClient redissonClient;
 
     /**
      * 用户注册
@@ -273,14 +272,14 @@ public class UserController {
         ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         // 优先查询缓存
         String redisKey = String.format("yxpei:user:recommend:%s", loginUser.getId());
-        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
-        Page<User> userPage = (Page<User>) valueOps.get(redisKey);
+        // ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
+        Page<User> userPage = (Page<User>) redissonClient.getBucket(redisKey).get();
         if (ObjUtil.isNotNull(userPage)) {
             // 缓存命中
             return ResultUtils.success(userPage);
         }
         // 缓存未命中，查询数据库并写入缓存
-        myCacheManager.writeRedisFromSql(redisKey, valueOps);
+        myCacheManager.writeRedissonFromSql(redisKey);
         return ResultUtils.success(userPage);
     }
 
