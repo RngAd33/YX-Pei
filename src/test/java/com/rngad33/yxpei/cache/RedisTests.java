@@ -25,11 +25,8 @@ class RedisTests {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    @Resource
-    private RedissonClient redissonClient;
-
     @Test
-    public void redisTest1() {
+    void redisTest1() {
         // 获取redis操作对象
         ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
 
@@ -62,7 +59,7 @@ class RedisTests {
     }
 
     @Test
-    public void redisTest2() {
+    void redisTest2() {
         // 获取redis操作对象
         ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
 
