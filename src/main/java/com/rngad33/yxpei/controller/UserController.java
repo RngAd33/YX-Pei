@@ -9,7 +9,7 @@ import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.manager.MyCacheManager;
 import com.rngad33.yxpei.manager.UserManager;
-import com.rngad33.yxpei.model.dto.*;
+import com.rngad33.yxpei.model.dto.user.*;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
 import com.rngad33.yxpei.model.vo.UserVO;
@@ -39,13 +39,13 @@ public class UserController {
     private MyCacheManager myCacheManager;
 
     @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Resource
     private UserManager userManager;
 
     @Resource
     private UserService userService;
-
-    @Resource
-    private RedisTemplate redisTemplate;
 
     /**
      * 用户注册
@@ -132,6 +132,9 @@ public class UserController {
 
     /**
      * 根据id查询用户（管理员）
+     *
+     * @param id
+     * @return
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @GetMapping("/get")

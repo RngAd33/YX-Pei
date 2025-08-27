@@ -1,14 +1,14 @@
-package com.rngad33.yxpei.model.dto;
+package com.rngad33.yxpei.model.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 /**
- * 用户更新请求体
+ * 用户添加请求体
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserUpdateRequest {
+public class UserAddRequest{
 
     /**
      * 用户 id

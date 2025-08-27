@@ -1,22 +1,21 @@
-package com.rngad33.yxpei.model.entity;
+package com.rngad33.yxpei.model.dto.team;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
-import com.mybatisflex.annotation.Table;
+import com.rngad33.yxpei.model.entity.User;
 import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
 
 /**
- * 队伍模型
+ * 队伍更新请求体（仅管理员）
  */
 @Data
-@Table("team")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Team {
+public class TeamUpdateRequest {
 
     /**
      * 队伍id
@@ -40,19 +39,14 @@ public class Team {
     private Integer maxNum;
 
     /**
-     * 过期时间
+     * 创建人（队长）
      */
-    private Date expireTime;
+    private User leader;
 
     /**
-     * 创建人id（队长）
+     * 成员表
      */
-    private Long leaderId;
-
-//    /**
-//     * 成员表
-//     */
-//    private List<User> users;
+    private List<User> users;
 
     /**
      * 是否需要队长审批？0-不需要，1-需要
@@ -65,11 +59,6 @@ public class Team {
     private Integer status;
 
     /**
-     * 加入密码
-     */
-    private String teamPassword;
-
-    /**
      * 创建时间
      */
     private Date createTime;
@@ -78,11 +67,5 @@ public class Team {
      * 更新时间
      */
     private Date updateTime;
-
-    /**
-     * 是否删除？ 0-未删，1-已删
-     */
-    @Column(isLogicDelete = true)
-    private Integer isDelete;
 
 }

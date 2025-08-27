@@ -1,17 +1,14 @@
-package com.rngad33.yxpei.model.dto;
+package com.rngad33.yxpei.model.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.rngad33.yxpei.common.PageRequest;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
- * 用户查询请求体
+ * 用户更新请求体
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserQueryRequest extends PageRequest {
+public class UserUpdateRequest {
 
     /**
      * 用户 id
@@ -27,6 +24,21 @@ public class UserQueryRequest extends PageRequest {
      * 身份？ 0-普通用户，1-管理员
      */
     private Integer role;
+
+    /**
+     * 头像地址
+     */
+    private String avatarUrl;
+
+    /**
+     * 性别
+     */
+    private Integer gender;
+
+    /**
+     * 密码
+     */
+    private String userPassword;
 
     /**
      * 电话

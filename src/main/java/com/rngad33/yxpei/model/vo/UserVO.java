@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 用户视图（脱敏）
+ * 用户视图
  */
 @Data
 public class UserVO {

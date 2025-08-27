@@ -1,4 +1,4 @@
-package com.rngad33.yxpei.model.dto;
+package com.rngad33.yxpei.model.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
