@@ -32,13 +32,21 @@ public class PreCacheJob {
      * 预热推荐用户（每天23:59执行）
      */
     @Scheduled(cron = "0 59 23 * * *")
-    public void doPreCacheRecommendUser() throws InterruptedException {
+    public void doPreCacheRecommendUser() {
         RLock lock = redissonClient.getLock("yxpei:precachejob:docache:lock");
-        if (lock.tryLock(0, 256, TimeUnit.SECONDS)) {
-            for (Long id : mainUserList) {
-                myCacheManager.writeRedisFromSql(id);
+        try {
+            if (lock.tryLock(0, 256L, TimeUnit.SECONDS)) {
+                for (Long id : mainUserList) {
+                    myCacheManager.writeRedisFromSql(id);
+                }
             }
-            lock.unlock();
+        } catch (InterruptedException e) {
+            log.error("! Redis exe error: ", e.getMessage());
+        } finally {
+            // 只能释放自己的锁
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
     }
 
