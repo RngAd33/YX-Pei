@@ -91,9 +91,8 @@ public class MyCacheManager {
      * 缓存写入（基于Redisson）
      *
      * @param redisKey
-     * @param valueOps
      */
-    public void writeRedissonFromSql(String redisKey, ValueOperations<String, Object> valueOps) {
+    public void writeRedissonFromSql(String redisKey) {
         // 查询数据库
         QueryWrapper queryWrapper = new QueryWrapper();
         Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);

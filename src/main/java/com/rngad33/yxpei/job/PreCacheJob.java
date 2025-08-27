@@ -35,7 +35,7 @@ public class PreCacheJob {
     public void doPreCacheRecommendUser() {
         RLock lock = redissonClient.getLock("yxpei:precachejob:docache:lock");
         try {
-            if (lock.tryLock(0, 256L, TimeUnit.SECONDS)) {
+            if (lock.tryLock(0, -1, TimeUnit.SECONDS)) {
                 for (Long id : mainUserList) {
                     myCacheManager.writeRedisFromSql(id);
                 }
