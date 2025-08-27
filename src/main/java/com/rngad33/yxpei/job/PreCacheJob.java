@@ -38,6 +38,7 @@ public class PreCacheJob {
             for (Long id : mainUserList) {
                 myCacheManager.writeRedisFromSql(id);
             }
+            lock.unlock();
         }
     }
 
