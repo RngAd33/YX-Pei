@@ -5,7 +5,6 @@ import com.rngad33.yxpei.model.entity.User;
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * 队伍编辑请求体
@@ -13,6 +12,11 @@ import java.util.List;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TeamEditRequest {
+
+    /**
+     * 队伍id
+     */
+    private Long id;
 
     /**
      * 队伍名称
@@ -28,6 +32,11 @@ public class TeamEditRequest {
      * 人数上限
      */
     private Integer maxNum;
+
+    /**
+     * 过期时间
+     */
+    private Date expireTime;
 
     /**
      * 创建人id（队长）

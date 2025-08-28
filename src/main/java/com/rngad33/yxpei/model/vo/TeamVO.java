@@ -1,10 +1,8 @@
 package com.rngad33.yxpei.model.vo;
 
-import com.rngad33.yxpei.model.entity.User;
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * 队伍视图
@@ -28,14 +26,14 @@ public class TeamVO {
     private Integer maxNum;
 
     /**
-     * 创建人（队长）
+     * 过期时间
      */
-    private User leader;
+    private Date expireTime;
 
     /**
-     * 成员表
+     * 创建人id（队长）
      */
-    private List<User> users;
+    private Long leaderId;
 
     /**
      * 是否需要队长审批？0-不需要，1-需要
@@ -43,9 +41,14 @@ public class TeamVO {
     private Integer needApproval;
 
     /**
-     * 是否公开？0-不公开，1-公开
+     * 开放状态？0-公开，1-私有，2-加密
      */
-    private Integer isPublic;
+    private Integer status;
+
+    /**
+     * 加入密码
+     */
+    private String teamPassword;
 
     /**
      * 创建时间

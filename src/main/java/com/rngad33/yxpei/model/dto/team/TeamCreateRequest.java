@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rngad33.yxpei.model.entity.User;
 import lombok.Data;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -27,6 +28,11 @@ public class TeamCreateRequest {
      * 人数上限
      */
     private Integer maxNum;
+
+    /**
+     * 过期时间
+     */
+    private Date expireTime;
 
     /**
      * 创建人id（队长）

@@ -20,7 +20,6 @@ public class TeamUpdateRequest {
     /**
      * 队伍id
      */
-    @Id(keyType = KeyType.Auto)
     private Long id;
 
     /**
@@ -39,9 +38,14 @@ public class TeamUpdateRequest {
     private Integer maxNum;
 
     /**
-     * 创建人（队长）
+     * 过期时间
      */
-    private User leader;
+    private Date expireTime;
+
+    /**
+     * 创建人id（队长）
+     */
+    private Long leaderId;
 
     /**
      * 是否需要队长审批？0-不需要，1-需要
@@ -67,5 +71,10 @@ public class TeamUpdateRequest {
      * 更新时间
      */
     private Date updateTime;
+
+    /**
+     * 是否删除？ 0-未删，1-已删
+     */
+    private Integer isDelete;
 
 }

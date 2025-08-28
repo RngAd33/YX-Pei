@@ -154,7 +154,7 @@ public class UserController {
     @GetMapping("/get/vo")
     public BaseResponse<UserVO> getUserVOById(long id) {
         ThrowUtils.throwIf(id <= 0, ErrorCodeEnum.PARAMS_ERROR, "id无效！");
-        BaseResponse<User> response = getUserById(id);
+        BaseResponse<User> response = this.getUserById(id);
         User user = response.getData();
         return ResultUtils.success(userService.getUserVO(user));
     }

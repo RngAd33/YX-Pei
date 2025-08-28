@@ -2,6 +2,7 @@ package com.rngad33.yxpei.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -328,6 +329,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public Integer updateUser(User user, User loginUser) {
         long id = user.getId();
+        ThrowUtils.throwIf(ObjectUtil.isNull(user), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         ThrowUtils.throwIf(id <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
         // 管理员有权更新所有用户，普通用户只能更新自己的视图信息
         if (userManager.isNotAdmin(loginUser) && id != loginUser.getId()) {
