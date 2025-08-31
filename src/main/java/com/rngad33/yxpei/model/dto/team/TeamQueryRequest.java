@@ -12,13 +12,33 @@ import lombok.Data;
 public class TeamQueryRequest {
 
     /**
+     * id
+     */
+    private Long id;
+
+    /**
+     * 搜索关键词（同时对队伍名称和描述搜索）
+     */
+    private String searchText;
+
+    /**
      * 队伍名称
      */
     private String teamName;
 
     /**
+     * 队伍描述
+     */
+    private String description;
+
+    /**
      * 创建人id（队长）
      */
     private Long leaderId;
+
+    /**
+     * 开放状态？0-公开，1-私有，2-加密
+     */
+    private Integer status;
 
 }

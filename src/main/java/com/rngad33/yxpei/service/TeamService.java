@@ -27,13 +27,21 @@ public interface TeamService extends IService<Team> {
     Long teamCreate(TeamCreateRequest request, User loginUser) throws Exception;
 
     /**
-     * 获取队伍列表
+     * 编辑队伍
      *
-     * @param teamName
-     * @param leaderId
+     * @param team
+     * @param loginUser
      * @return
      */
-    List<TeamVO> listTeams(String teamName, long leaderId);
+    Integer teamEdit(Team team, User loginUser) throws Exception;
+
+    /**
+     * 查询队伍列表
+     *
+     * @param teamQueryRequest
+     * @return
+     */
+    List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest);
 
     /**
      * 分页查询对象构建

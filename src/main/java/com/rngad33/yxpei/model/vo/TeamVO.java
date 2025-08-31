@@ -36,6 +36,11 @@ public class TeamVO {
     private Long leaderId;
 
     /**
+     * 创建人信息
+     */
+    private UserVO leader;
+
+    /**
      * 是否需要队长审批？0-不需要，1-需要
      */
     private Integer needApproval;

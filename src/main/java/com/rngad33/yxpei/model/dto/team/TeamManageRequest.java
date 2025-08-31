@@ -10,6 +10,6 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TeamManageRequest {
 
-    private Long id;
+    private Long id, leaderId;
 
 }
