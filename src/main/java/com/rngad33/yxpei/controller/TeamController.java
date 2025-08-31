@@ -3,12 +3,15 @@ package com.rngad33.yxpei.controller;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.rngad33.yxpei.annotation.AuthCheck;
 import com.rngad33.yxpei.common.BaseResponse;
+import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.manager.MyCacheManager;
 import com.rngad33.yxpei.manager.UserManager;
 import com.rngad33.yxpei.model.dto.team.TeamCreateRequest;
 import com.rngad33.yxpei.model.dto.team.TeamEditRequest;
 import com.rngad33.yxpei.model.dto.team.TeamQueryRequest;
+import com.rngad33.yxpei.model.dto.team.TeamUpdateRequest;
 import com.rngad33.yxpei.model.entity.Team;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
@@ -69,26 +72,25 @@ public class TeamController {
     }
 
     /**
-     * 编辑队伍
+     * 编辑队伍（用户）
      *
      * @param teamEditRequest
      * @param request
      * @return
      */
+    @AuthCheck(mustRole = UserConstant.DEFAULT_ROLE)
     @PostMapping("/edit")
-    public BaseResponse<Integer> teamEdit(@RequestBody TeamEditRequest teamEditRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> teamEdit(@RequestBody TeamEditRequest teamEditRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamEditRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
         // 必须登录才能操作
         ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
-        // 仅管理员和队长有权编辑
-        ThrowUtils.throwIf(ObjectUtil.equals(loginUser.getId(), teamEditRequest.getLeaderId()) ||
-                userManager.isAdmin(loginUser), ErrorCodeEnum.USER_NOT_AUTH, "仅管理员和队长有权编辑！");
-
+        // 仅队长有权编辑；队长只能编辑自己创建的队伍
+        ThrowUtils.throwIf(ObjectUtil.equals(loginUser.getId(), teamEditRequest.getLeaderId()),
+                ErrorCodeEnum.USER_NOT_AUTH, "队员不可编辑！");
         Team team = new Team();
         BeanUtil.copyProperties(teamEditRequest, team);
-
-        int result = teamService.teamEdit(team, loginUser);
+        Boolean result = teamService.updateById(team);
         return ResultUtils.success(result);
     }
 
@@ -106,6 +108,26 @@ public class TeamController {
         ThrowUtils.throwIf(StrUtil.isBlank(teamName) && leaderId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的参数！");
         List<TeamVO> teamList = teamService.listTeams(teamName, leaderId);
         return ResultUtils.success(teamList);
+    }
+
+    /**
+     * 更新队伍（仅管理员）
+     *
+     * @param teamUpdateRequest
+     * @param request
+     * @return
+     */
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @PostMapping("/update")
+    public BaseResponse<Boolean> teamUpdate(@RequestBody TeamUpdateRequest teamUpdateRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjectUtil.isNull(teamUpdateRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        String teamName = teamUpdateRequest.getTeamName();
+        long leaderId = teamUpdateRequest.getLeaderId();
+        ThrowUtils.throwIf(StrUtil.isBlank(teamName) && leaderId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的参数！");
+        Team team = new Team();
+        BeanUtil.copyProperties(teamUpdateRequest, team);
+        Boolean result = teamService.updateById(team);
+        return ResultUtils.success(result);
     }
 
 }

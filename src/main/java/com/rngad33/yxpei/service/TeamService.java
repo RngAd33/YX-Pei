@@ -27,15 +27,6 @@ public interface TeamService extends IService<Team> {
     Long teamCreate(TeamCreateRequest request, User loginUser) throws Exception;
 
     /**
-     * 编辑队伍
-     *
-     * @param team
-     * @param loginUser
-     * @return
-     */
-    Integer teamEdit(Team team, User loginUser);
-
-    /**
      * 获取队伍列表
      *
      * @param teamName

@@ -40,9 +40,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     @Resource
     private TeamMapper teamMapper;
 
-    @Resource
-    private UserManager userManager;
-
     /**
      * 创建队伍
      *
@@ -54,6 +51,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     public Long teamCreate(TeamCreateRequest request, User loginUser) throws Exception {
         // 数据校验
         ThrowUtils.throwIf(ObjectUtil.isNull(request), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         String teamName = request.getTeamName();
         String description = request.getDescription();
         Integer maxNum = request.getMaxNum();
@@ -61,7 +59,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         Integer needApproval = request.getNeedApproval();
         Integer status = request.getStatus();
         String teamPassword = request.getTeamPassword();
-        this.doValidateForCreateOrEdit(loginUser, teamName, description, maxNum, needApproval, status);
+        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || teamName.length() > 16,
+                ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
+        ThrowUtils.throwIf(description.length() > 256, ErrorCodeEnum.PARAMS_ERROR, "描述过长！");
+        ThrowUtils.throwIf(maxNum <= 0 || maxNum > 30, ErrorCodeEnum.PARAMS_ERROR, "人数超出最大限制！");
+        ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
+        ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
 
         // 加锁，操作数据库
         synchronized (LockUtils.getKeyLock(teamName)) {
@@ -94,27 +97,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             // - 返回新队伍id
             return team.getId();
         }
-    }
-
-    /**
-     * 编辑队伍
-     *
-     * @param team
-     * @param loginUser
-     * @return
-     */
-    @Override
-    public Integer teamEdit(Team team, User loginUser) {
-        long teamId = team.getId();
-        ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
-        Team oldTeam = teamMapper.selectOneById(teamId);
-        // 管理员有权编辑所有队伍信息，普通用户只能编辑自己创建的队伍视图信息
-        if (userManager.isNotAdmin(loginUser) && !Objects.equals(oldTeam.getLeaderId(), loginUser.getId())) {
-            throw new MyException(ErrorCodeEnum.USER_NOT_AUTH);
-        }
-        ThrowUtils.throwIf(ObjectUtil.isNull(oldTeam), ErrorCodeEnum.NO_PARAMS, "队伍不存在！");
-        return teamMapper.update(team);
     }
 
     /**
@@ -156,32 +138,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         queryWrapper.like("team_name", teamName, StrUtil.isNotBlank(teamName));
         queryWrapper.eq("leader_id", leaderId, ObjUtil.isNotNull(leaderId));
         return queryWrapper;
-    }
-
-    /**
-     * 创建、编辑队伍方法信息校验
-     *
-     * @param loginUser
-     * @param teamName
-     * @param description
-     * @param maxNum
-     * @param needApproval
-     * @param status
-     */
-    private void doValidateForCreateOrEdit(User loginUser, String teamName, String description, Integer maxNum,
-                                           Integer needApproval, Integer status) {
-        ThrowUtils.throwIf(ObjectUtil.isNull(loginUser),
-                ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
-        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || teamName.length() > 16,
-                ErrorCodeEnum.PARAMS_ERROR, "名称过长！");
-        ThrowUtils.throwIf(StrUtil.isBlank(description) || description.length() > 256,
-                ErrorCodeEnum.PARAMS_ERROR, "描述过长！");
-        ThrowUtils.throwIf(maxNum <= 0 || maxNum > 30,
-                ErrorCodeEnum.PARAMS_ERROR, "人数超出最大限制！");
-        ThrowUtils.throwIf(needApproval != 0 && needApproval != 1,
-                ErrorCodeEnum.PARAMS_ERROR, "参数无效！");
-        ThrowUtils.throwIf(status != 0 && status != 1 && status != 2,
-                ErrorCodeEnum.PARAMS_ERROR, "参数无效！");
     }
 
 }

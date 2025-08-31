@@ -247,8 +247,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/update")
-    public BaseResponse<Integer> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
-                                            HttpServletRequest request) {
+    public BaseResponse<Integer> updateUser(@RequestBody UserUpdateRequest userUpdateRequest, HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
