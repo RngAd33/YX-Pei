@@ -148,7 +148,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
-    public List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest) {
+    public List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest, boolean isAdmin) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamQueryRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         long id = teamQueryRequest.getId();
         String teamName = teamQueryRequest.getTeamName();
@@ -163,6 +163,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         if (StrUtil.isNotBlank(description)) {
             queryWrapper.like("description", description);
         }
+
         // - 过期队伍不予展示
         queryWrapper.and(TEAM.EXPIRE_TIME.gt(new Date())
                 .or(TEAM.EXPIRE_TIME.isNull())

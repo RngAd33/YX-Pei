@@ -41,7 +41,7 @@ public interface TeamService extends IService<Team> {
      * @param teamQueryRequest
      * @return
      */
-    List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest);
+    List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest, boolean isAdmin);
 
     /**
      * 分页查询对象构建
