@@ -119,10 +119,10 @@ public class TeamController {
      * @return
      */
     @GetMapping("/list/page")
-    public BaseResponse<Page<Team>> listTeamsByPage(TeamQueryRequest teamQueryRequest, PageRequest pageRequest) {
+    public BaseResponse<Page<Team>> listTeamsByPage(TeamQueryRequest teamQueryRequest) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamQueryRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         QueryWrapper queryWrapper = new QueryWrapper();
-        Page<Team> page = new Page<>(pageRequest.getCurrent(), pageRequest.getPageSize());
+        Page<Team> page = new Page<>(teamQueryRequest.getCurrent(), teamQueryRequest.getPageSize());
         Page<Team> resultPage = teamService.page(page, queryWrapper);
         return ResultUtils.success(resultPage);
     }
