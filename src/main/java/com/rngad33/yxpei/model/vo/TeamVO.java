@@ -1,5 +1,8 @@
 package com.rngad33.yxpei.model.vo;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.rngad33.yxpei.model.entity.Team;
 import lombok.Data;
 
 import java.util.Date;
@@ -8,6 +11,7 @@ import java.util.Date;
  * 队伍视图
  */
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TeamVO {
 
     /**
@@ -59,5 +63,35 @@ public class TeamVO {
      * 创建时间
      */
     private Date createTime;
+
+    /**
+     * 对象转封装类
+     *
+     * @param team
+     * @return
+     */
+    public static TeamVO objToVo(Team team) {
+        if (team == null) {
+            return null;
+        }
+        TeamVO teamVO = new TeamVO();
+        BeanUtil.copyProperties(team, teamVO);
+        return teamVO;
+    }
+
+    /**
+     * 封装类转对象
+     *
+     * @param teamVO
+     * @return
+     */
+    public static Team voToObj(TeamVO teamVO) {
+        if (teamVO == null) {
+            return null;
+        }
+        Team team = new Team();
+        BeanUtil.copyProperties(teamVO, team);
+        return team;
+    }
 
 }
