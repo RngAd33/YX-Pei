@@ -43,13 +43,10 @@ import static com.rngad33.yxpei.model.entity.table.TeamTableDef.TEAM;
 public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements TeamService {
 
     @Resource
-    private TeamMapper teamMapper;
-
-    @Resource
-    private UserManager userManager;
-
-    @Resource
     private UserService userService;
+
+    @Resource
+    private TeamMapper teamMapper;
 
     /**
      * 创建队伍
