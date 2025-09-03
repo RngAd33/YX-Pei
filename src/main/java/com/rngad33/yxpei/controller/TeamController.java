@@ -7,7 +7,6 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.rngad33.yxpei.annotation.AuthCheck;
 import com.rngad33.yxpei.common.BaseResponse;
-import com.rngad33.yxpei.common.PageRequest;
 import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.manager.MyCacheManager;
 import com.rngad33.yxpei.manager.UserManager;
@@ -23,8 +22,6 @@ import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -171,8 +168,8 @@ public class TeamController {
     public BaseResponse<Boolean> teamJoin(TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
-
-        return ResultUtils.success(null);
+        Boolean result = teamService.teamJoin(teamJoinRequest, loginUser);
+        return ResultUtils.success(result);
     }
 
     /**
@@ -182,8 +179,8 @@ public class TeamController {
     public BaseResponse<Boolean> teamExit(TeamExitRequest teamExitRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
-
-        return ResultUtils.success(null);
+        Boolean result = teamService.teamExit(teamExitRequest, loginUser);
+        return ResultUtils.success(result);
     }
 
     /**

@@ -2,13 +2,10 @@ package com.rngad33.yxpei.service;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
-import com.rngad33.yxpei.model.dto.team.TeamCreateRequest;
-import com.rngad33.yxpei.model.dto.team.TeamEditRequest;
-import com.rngad33.yxpei.model.dto.team.TeamQueryRequest;
+import com.rngad33.yxpei.model.dto.team.*;
 import com.rngad33.yxpei.model.entity.Team;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.model.vo.TeamVO;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -42,6 +39,24 @@ public interface TeamService extends IService<Team> {
      * @return
      */
     List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest, boolean isAdmin);
+
+    /**
+     * 加入队伍
+     *
+     * @param teamJoinRequest
+     * @param loginUser
+     * @return
+     */
+    Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser);
+
+    /**
+     * 退出队伍
+     *
+     * @param teamExitRequest
+     * @param loginUser
+     * @return
+     */
+    Boolean teamExit(TeamExitRequest teamExitRequest, User loginUser);
 
     /**
      * 分页查询对象构建

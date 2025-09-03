@@ -10,9 +10,7 @@ import com.rngad33.yxpei.constant.ErrorConstant;
 import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.manager.UserManager;
 import com.rngad33.yxpei.mapper.TeamMapper;
-import com.rngad33.yxpei.model.dto.team.TeamCreateRequest;
-import com.rngad33.yxpei.model.dto.team.TeamEditRequest;
-import com.rngad33.yxpei.model.dto.team.TeamQueryRequest;
+import com.rngad33.yxpei.model.dto.team.*;
 import com.rngad33.yxpei.model.entity.Team;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
@@ -185,6 +183,32 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             teamUserVOList.add(teamVO);
         }
         return teamUserVOList;
+    }
+
+    /**
+     * 加入队伍
+     *
+     * @param teamJoinRequest
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) {
+
+        return null;
+    }
+
+    /**
+     * 退出队伍
+     *
+     * @param teamExitRequest
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public Boolean teamExit(TeamExitRequest teamExitRequest, User loginUser) {
+
+        return null;
     }
 
     /**
