@@ -47,7 +47,7 @@ public interface TeamService extends IService<Team> {
      * @param loginUser
      * @return
      */
-    Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser);
+    Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) throws Exception ;
 
     /**
      * 退出队伍

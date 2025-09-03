@@ -14,6 +14,7 @@ import com.rngad33.yxpei.model.dto.team.*;
 import com.rngad33.yxpei.model.entity.Team;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
+import com.rngad33.yxpei.model.enums.team.TeamStatusEnum;
 import com.rngad33.yxpei.model.vo.TeamVO;
 import com.rngad33.yxpei.model.vo.UserVO;
 import com.rngad33.yxpei.service.TeamService;
@@ -23,6 +24,8 @@ import com.rngad33.yxpei.utils.LockUtils;
 import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +48,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
 
     @Resource
     private TeamMapper teamMapper;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     /**
      * 创建队伍
@@ -193,7 +199,27 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
-    public Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) {
+    public Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) throws Exception {
+        ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        Long teamId = teamJoinRequest.getTeamId();
+        String teamPassword = teamJoinRequest.getPassword();
+        Team team = this.getById(teamId);
+        Date expireTime = team.getExpireTime();
+        Integer status = team.getStatus();
+        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
+        // 过期队伍不予加入
+        ThrowUtils.throwIf(ObjectUtil.isNotNull(expireTime) && expireTime.before(new Date()),
+                ErrorCodeEnum.USER_LOSE_ACTION, "队伍已过期！");
+        // 私有队伍不予加入
+        ThrowUtils.throwIf(TeamStatusEnum.PRIVATE.equals(teamStatusEnum),
+                ErrorCodeEnum.USER_LOSE_ACTION, "私有队伍不可加入！");
+        // 加密队伍需要校验密码
+        String encryptedPassword = AESUtils.doEncrypt(teamPassword);
+        ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) || teamPassword.equals(team.getTeamPassword()),
+                ErrorCodeEnum.USER_LOSE_ACTION, "密码错误！");
+
+        // 加分布式锁，操作数据库
+        RLock lock = redissonClient.getLock("yxpei:join_team");
 
         return null;
     }
@@ -207,6 +233,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      */
     @Override
     public Boolean teamExit(TeamExitRequest teamExitRequest, User loginUser) {
+        ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        Long teamId = teamExitRequest.getTeamId();
+        Team team = this.getById(teamId);
+
+
+        QueryWrapper queryWrapper = new QueryWrapper();
 
         return null;
     }

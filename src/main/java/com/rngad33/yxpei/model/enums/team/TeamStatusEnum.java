@@ -21,4 +21,23 @@ public enum TeamStatusEnum {
         this.text = text;
     }
 
+    /**
+     * 根据 value 获取枚举
+     *
+     * @param value
+     * @return
+     */
+    public static TeamStatusEnum getEnumByValue(Integer value) {
+        if (value == null) {
+            return null;
+        }
+        TeamStatusEnum[] values = TeamStatusEnum.values();
+        for (TeamStatusEnum teamStatusEnum : values) {
+            if (teamStatusEnum.getValue() == value) {
+                return teamStatusEnum;
+            }
+        }
+        return null;
+    }
+
 }
