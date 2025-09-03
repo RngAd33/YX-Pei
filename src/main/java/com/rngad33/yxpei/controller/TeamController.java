@@ -155,8 +155,8 @@ public class TeamController {
     @PostMapping("/update")
     public BaseResponse<Boolean> teamUpdate(@RequestBody TeamUpdateRequest teamUpdateRequest) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamUpdateRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        String teamName = teamUpdateRequest.getTeamName();
         long leaderId = teamUpdateRequest.getLeaderId();
+        String teamName = teamUpdateRequest.getTeamName();
         ThrowUtils.throwIf(StrUtil.isBlank(teamName) && leaderId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的参数！");
         Team team = new Team();
         BeanUtil.copyProperties(teamUpdateRequest, team);
@@ -167,17 +167,54 @@ public class TeamController {
     /**
      * 加入队伍
      */
+    @PostMapping("/join")
+    public BaseResponse<Boolean> teamJoin(TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        User loginUser = userService.getCurrentUser(request);
+
+        return ResultUtils.success(null);
+    }
 
     /**
      * 退出队伍
      */
+    @PostMapping("/exit")
+    public BaseResponse<Boolean> teamExit(TeamExitRequest teamExitRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        User loginUser = userService.getCurrentUser(request);
+
+        return ResultUtils.success(null);
+    }
 
     /**
      * 获取当前用户创建的队伍
+     *
+     * @param teamQueryRequest
+     * @param request
+     * @return
      */
+    @GetMapping("/teams/create")
+    public BaseResponse<List<TeamVO>> getCurrentCreatedTeams(TeamQueryRequest teamQueryRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjectUtil.isNull(teamQueryRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        User loginUser = userService.getCurrentUser(request);
+        teamQueryRequest.setLeaderId(loginUser.getId());
+        List<TeamVO> teamList = teamService.listTeams(teamQueryRequest, true);
+        return ResultUtils.success(teamList);
+    }
 
     /**
      * 获取当前用户加入的队伍
+     *
+     * @param teamQueryRequest
+     * @param request
+     * @return
      */
+    @GetMapping("/teams/join")
+    public BaseResponse<List<TeamVO>> getCurrentJoinedTeams(TeamQueryRequest teamQueryRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjectUtil.isNull(teamQueryRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        User loginUser = userService.getCurrentUser(request);
+
+        return ResultUtils.success(null);
+    }
 
 }
