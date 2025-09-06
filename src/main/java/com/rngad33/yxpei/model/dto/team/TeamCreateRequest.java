@@ -37,7 +37,7 @@ public class TeamCreateRequest {
     /**
      * 创建人id（队长）
      */
-    private User leaderId;
+    private Long leaderId;
 
     /**
      * 是否需要队长审批？0-不需要，1-需要

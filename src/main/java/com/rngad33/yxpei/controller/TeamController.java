@@ -32,7 +32,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/team")
-@Slf4j
 public class TeamController {
 
     @Resource
@@ -56,8 +55,7 @@ public class TeamController {
      * @return
      */
     @PostMapping("/create")
-    public BaseResponse<Long> teamCreate(@RequestBody TeamCreateRequest teamCreateRequest, HttpServletRequest request)
-            throws Exception {
+    public BaseResponse<Long> teamCreate(@RequestBody TeamCreateRequest teamCreateRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamCreateRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
         // 必须登录才能操作
