@@ -151,24 +151,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     @Override
     public List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest, boolean isAdmin) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamQueryRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        long id = teamQueryRequest.getId();
-        String teamName = teamQueryRequest.getTeamName();
-        String description = teamQueryRequest.getDescription();
-        long leaderId = teamQueryRequest.getLeaderId();
-        Integer status = teamQueryRequest.getStatus();
         // 组合多条件查询语句
-        QueryWrapper queryWrapper = new QueryWrapper();
-        queryWrapper.eq("id", id);
-        queryWrapper.like("team_name", teamName);
-        queryWrapper.eq("leaderId", leaderId);
-        if (StrUtil.isNotBlank(description)) {
-            queryWrapper.like("description", description);
-        }
+        QueryWrapper queryWrapper = this.getQueryWrapper(teamQueryRequest);
 
-        // - 过期队伍不予展示
-        queryWrapper.and(TEAM.EXPIRE_TIME.gt(new Date())
-                .or(TEAM.EXPIRE_TIME.isNull())
-        );
         List<Team> teamList = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(teamList)) {
             return new ArrayList<>();
@@ -177,7 +162,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         List<TeamVO> teamUserVOList = new ArrayList<>();
         for (Team team : teamList) {
 
-            User user = userService.getById(leaderId);
+            User user = userService.getById(teamQueryRequest.getLeaderId());
             TeamVO teamVO = new TeamVO();
             BeanUtils.copyProperties(team, teamVO);
             // 视图脱敏
@@ -262,8 +247,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.eq("id", id, ObjUtil.isNotNull(id));
         queryWrapper.like("team_name", teamName, StrUtil.isNotBlank(teamName));
-        queryWrapper.like("description", description, StrUtil.isNotBlank(description));
         queryWrapper.eq("leader_id", leaderId, ObjUtil.isNotNull(leaderId));
+        queryWrapper.like("description", description, StrUtil.isNotBlank(description));
+        // 过期队伍不予展示
+        queryWrapper.and(TEAM.EXPIRE_TIME.gt(new Date())
+                .or(TEAM.EXPIRE_TIME.isNull())
+        );
         // queryWrapper.eq("status", status, ObjUtil.isNotNull(status));
         return queryWrapper;
     }

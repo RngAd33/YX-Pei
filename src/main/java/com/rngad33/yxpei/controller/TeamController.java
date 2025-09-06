@@ -163,9 +163,15 @@ public class TeamController {
 
     /**
      * 加入队伍
+     *
+     * @param teamJoinRequest
+     * @param request
+     * @return
+     * @throws Exception
      */
     @PostMapping("/join")
-    public BaseResponse<Boolean> teamJoin(TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> teamJoin(TeamJoinRequest teamJoinRequest, HttpServletRequest request)
+            throws Exception {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
         Boolean result = teamService.teamJoin(teamJoinRequest, loginUser);
@@ -174,6 +180,10 @@ public class TeamController {
 
     /**
      * 退出队伍
+     *
+     * @param teamExitRequest
+     * @param request
+     * @return
      */
     @PostMapping("/exit")
     public BaseResponse<Boolean> teamExit(TeamExitRequest teamExitRequest, HttpServletRequest request) {
