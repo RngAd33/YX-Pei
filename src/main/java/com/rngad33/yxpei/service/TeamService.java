@@ -30,7 +30,7 @@ public interface TeamService extends IService<Team> {
      * @param loginUser
      * @return
      */
-    Integer teamEdit(Team team, User loginUser) throws Exception;
+    Integer teamEdit(Team team, User loginUser);
 
     /**
      * 查询队伍列表

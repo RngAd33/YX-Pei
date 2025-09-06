@@ -151,9 +151,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
-    public Integer teamEdit(Team team, User loginUser) throws Exception {
+    public Integer teamEdit(Team team, User loginUser) {
         long teamId = team.getId();
         String teamName = team.getTeamName();
+        String teamPassword = team.getTeamPassword();
         ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         ThrowUtils.throwIf(StrUtil.isBlank(teamName), ErrorCodeEnum.PARAMS_ERROR, "名称不能为空！");
         ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
@@ -166,7 +167,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             ThrowUtils.throwIf(count > 1, ErrorCodeEnum.PARAMS_ERROR, "队伍名称已存在！");
             // - 队伍开启加密且密码不为空时，执行加密并写入数据库
             if (team.getStatus() == 2 && StrUtil.isNotBlank(team.getTeamPassword())) {
-                String encryptedPassword = AESUtils.doEncrypt(team.getTeamPassword());
+                String encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
                 team.setTeamPassword(encryptedPassword);
             }
             return teamMapper.update(team);

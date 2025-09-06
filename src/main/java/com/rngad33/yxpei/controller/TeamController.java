@@ -73,8 +73,7 @@ public class TeamController {
      */
     @AuthCheck(mustRole = UserConstant.DEFAULT_ROLE)
     @PostMapping("/edit")
-    public BaseResponse<Integer> teamEdit(@RequestBody TeamEditRequest teamEditRequest, HttpServletRequest request)
-            throws Exception {
+    public BaseResponse<Integer> teamEdit(@RequestBody TeamEditRequest teamEditRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamEditRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
         boolean isAdmin = userManager.isAdmin(loginUser);
