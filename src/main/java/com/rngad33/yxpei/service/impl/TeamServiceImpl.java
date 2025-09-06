@@ -30,6 +30,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -71,6 +72,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
+    @Transactional
     public Long teamCreate(TeamCreateRequest request, User loginUser) {
         // 数据准备
         ThrowUtils.throwIf(ObjectUtil.isNull(request), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
@@ -84,6 +86,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         String teamPassword = request.getTeamPassword();
         Integer status = request.getStatus();
         TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
+        if (teamStatusEnum == null) {
+            teamStatusEnum = TeamStatusEnum.PUBLIC;
+        }
         // 数据校验
         ThrowUtils.throwIf(StrUtil.isBlank(teamName) || teamName.length() > 16, ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
         ThrowUtils.throwIf(StrUtil.isNotBlank(description) && description.length() > 256, ErrorCodeEnum.PARAMS_ERROR, "描述过长！");
@@ -92,11 +97,13 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
         ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
         // - 队伍开启加密且密码非空、不过长时，执行加密并写入数据库
-        String encryptedPassword;
-        if (teamStatusEnum.equals(TeamStatusEnum.SECRET) && StrUtil.isNotBlank(teamPassword) && teamPassword.length() > 32) {
-            encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
-        } else {
-            throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
+        String encryptedPassword = null;
+        if (teamStatusEnum.equals(TeamStatusEnum.SECRET)) {
+            if (StrUtil.isNotBlank(teamPassword) && teamPassword.length() <= 32) {
+                encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
+            } else {
+                throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
+            }
         }
 
         // 加锁，操作数据库
@@ -105,7 +112,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             QueryWrapper queryWrapper = new QueryWrapper();
             queryWrapper.eq("leader_id", loginUser.getId());
             long count = teamMapper.selectCountByQuery(queryWrapper);
-            ThrowUtils.throwIf(count > 5, ErrorCodeEnum.PARAMS_ERROR, "一个用户最多创建5个队伍！");
+            ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "一个用户最多创建5个队伍！");
             // - 名称查重
             queryWrapper.eq("team_name", teamName);
             count = teamMapper.selectCountByQuery(queryWrapper);
@@ -208,7 +215,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
-    public Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) throws Exception {
+    public Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         Long teamId = teamJoinRequest.getTeamId();
         String teamPassword = teamJoinRequest.getPassword();
@@ -223,7 +230,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         ThrowUtils.throwIf(TeamStatusEnum.PRIVATE.equals(teamStatusEnum),
                 ErrorCodeEnum.USER_LOSE_ACTION, "私有队伍不可加入！");
         // 加密队伍需要校验密码
-        String encryptedPassword = AESUtils.doEncrypt(teamPassword);
+        String encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
         ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) || teamPassword.equals(team.getTeamPassword()),
                 ErrorCodeEnum.USER_LOSE_ACTION, "密码错误！");
 
@@ -268,6 +275,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         String description = teamQueryRequest.getDescription();
         final long leaderId = teamQueryRequest.getLeaderId();
         Integer status = teamQueryRequest.getStatus();
+        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
+        if (teamStatusEnum == null) {
+            teamStatusEnum = TeamStatusEnum.PUBLIC;
+        }
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.eq("id", id, ObjUtil.isNotNull(id));
         queryWrapper.like("team_name", teamName, StrUtil.isNotBlank(teamName));
