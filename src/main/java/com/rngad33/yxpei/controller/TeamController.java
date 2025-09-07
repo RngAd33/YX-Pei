@@ -191,6 +191,10 @@ public class TeamController {
     }
 
     /**
+     * 队伍推荐
+     */
+
+    /**
      * 获取当前用户创建的队伍
      *
      * @param teamQueryRequest

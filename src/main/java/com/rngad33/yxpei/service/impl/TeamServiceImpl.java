@@ -6,7 +6,6 @@ import cn.hutool.core.util.StrUtil;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import com.rngad33.yxpei.constant.ErrorConstant;
 import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.manager.UserManager;
 import com.rngad33.yxpei.mapper.TeamMapper;
@@ -21,14 +20,11 @@ import com.rngad33.yxpei.model.vo.UserVO;
 import com.rngad33.yxpei.service.TeamService;
 import com.rngad33.yxpei.service.UserService;
 import com.rngad33.yxpei.service.UserTeamService;
-import com.rngad33.yxpei.utils.AESUtils;
 import com.rngad33.yxpei.utils.LockUtils;
 import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
-import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
@@ -37,7 +33,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 import static com.rngad33.yxpei.model.entity.table.TeamTableDef.TEAM;
 
@@ -54,10 +49,13 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     private UserTeamService userTeamService;
 
     @Resource
+    private RedissonClient redissonClient;
+
+    @Resource
     private TeamMapper teamMapper;
 
     @Resource
-    private RedissonClient redissonClient;
+    private UserManager userManager;
 
     /**
      * 盐值，混淆密码
@@ -105,19 +103,18 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
             }
         }
-
         // 加锁，操作数据库
         synchronized (LockUtils.getKeyLock(loginUser.getUserName())) {
-            // 一个用户最多创建5个队伍
+            // - 同一用户最多创建5个队伍
             QueryWrapper queryWrapper = new QueryWrapper();
             queryWrapper.eq("leader_id", loginUser.getId());
             long count = teamMapper.selectCountByQuery(queryWrapper);
-            ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "一个用户最多创建5个队伍！");
+            ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "同一用户最多创建5个队伍！");
             // - 名称查重
             queryWrapper.eq("team_name", teamName);
             count = teamMapper.selectCountByQuery(queryWrapper);
             ThrowUtils.throwIf(count > 0, ErrorCodeEnum.PARAMS_ERROR, "队伍名称已存在！");
-            // - 写入队伍信息
+            // - 插入队伍数据到队伍表
             Team team = new Team();
             team.setTeamName(teamName);
             team.setDescription(description);
@@ -127,7 +124,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             team.setNeedApproval(needApproval);
             team.setStatus(status);
             team.setTeamPassword(encryptedPassword);
-            // - 插入队伍数据到队伍表
             boolean saveResult = this.save(team);
             Long teamId = team.getId();
             ThrowUtils.throwIf(!saveResult, ErrorCodeEnum.PARAMS_ERROR, "队伍数据插入失败！");
@@ -183,9 +179,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     @Override
     public List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest, boolean isAdmin) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamQueryRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        // 组合多条件查询语句
+        // 多条件查询
         QueryWrapper queryWrapper = this.getQueryWrapper(teamQueryRequest);
-
         List<Team> teamList = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(teamList)) {
             return new ArrayList<>();
@@ -193,16 +188,15 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         // 关联查询
         List<TeamVO> teamUserVOList = new ArrayList<>();
         for (Team team : teamList) {
-
-            User user = userService.getById(teamQueryRequest.getLeaderId());
-            TeamVO teamVO = new TeamVO();
-            BeanUtils.copyProperties(team, teamVO);
-            // 视图脱敏
-            if (user != null) {
-                UserVO userVO = new UserVO();
-                BeanUtils.copyProperties(user, userVO);
-                teamVO.setLeader(userVO);
+            Long leaderId = team.getLeaderId();
+            if (ObjUtil.isNull(leaderId)) {
+                continue;
             }
+            TeamVO teamVO = TeamVO.objToVo(team);
+            User user = userService.getById(leaderId);
+            User safeUser = userManager.getSafeUser(user);
+            UserVO vo = UserVO.objToVo(safeUser);
+            teamVO.setLeader(vo);
             teamUserVOList.add(teamVO);
         }
         return teamUserVOList;
@@ -268,28 +262,22 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      */
     @Override
     public QueryWrapper getQueryWrapper(TeamQueryRequest teamQueryRequest) {
-        if (teamQueryRequest == null) {
-            throw new MyException(ErrorCodeEnum.NO_PARAMS, "无效的请求！");
-        }
+        ThrowUtils.throwIf(ObjectUtil.isNull(teamQueryRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         Long id = teamQueryRequest.getId();
         String teamName = teamQueryRequest.getTeamName();
         String description = teamQueryRequest.getDescription();
         final long leaderId = teamQueryRequest.getLeaderId();
         Integer status = teamQueryRequest.getStatus();
-        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
-        if (teamStatusEnum == null) {
-            teamStatusEnum = TeamStatusEnum.PUBLIC;
-        }
         QueryWrapper queryWrapper = new QueryWrapper();
-        queryWrapper.eq("id", id, ObjUtil.isNotNull(id));
+        queryWrapper.eq("id", id, ObjUtil.isNotNull(id) && id > 0);
         queryWrapper.like("team_name", teamName, StrUtil.isNotBlank(teamName));
-        queryWrapper.eq("leader_id", leaderId, ObjUtil.isNotNull(leaderId));
         queryWrapper.like("description", description, StrUtil.isNotBlank(description));
+        queryWrapper.eq("leader_id", leaderId, ObjUtil.isNotNull(leaderId) && leaderId > 0);
+        queryWrapper.eq("status", status, ObjUtil.isNotNull(status) && status > -1);
         // 过期队伍不予展示
         queryWrapper.and(TEAM.EXPIRE_TIME.gt(new Date())
                 .or(TEAM.EXPIRE_TIME.isNull())
         );
-        // queryWrapper.eq("status", status, ObjUtil.isNotNull(status));
         return queryWrapper;
     }
 

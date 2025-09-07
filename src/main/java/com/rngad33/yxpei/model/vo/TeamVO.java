@@ -1,11 +1,13 @@
 package com.rngad33.yxpei.model.vo;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rngad33.yxpei.model.entity.Team;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 队伍视图
@@ -13,6 +15,11 @@ import java.util.Date;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TeamVO {
+
+    /**
+     * 队伍id
+     */
+    private Long id;
 
     /**
      * 队伍名称
@@ -45,6 +52,11 @@ public class TeamVO {
     private UserVO leader;
 
     /**
+     * 成员列表
+     */
+    private List<UserVO> memberList;
+
+    /**
      * 是否需要队长审批？0-不需要，1-需要
      */
     private Integer needApproval;
@@ -71,7 +83,7 @@ public class TeamVO {
      * @return
      */
     public static TeamVO objToVo(Team team) {
-        if (team == null) {
+        if (ObjUtil.isNull(team)) {
             return null;
         }
         TeamVO teamVO = new TeamVO();
@@ -86,7 +98,7 @@ public class TeamVO {
      * @return
      */
     public static Team voToObj(TeamVO teamVO) {
-        if (teamVO == null) {
+        if (ObjUtil.isNull(teamVO)) {
             return null;
         }
         Team team = new Team();
