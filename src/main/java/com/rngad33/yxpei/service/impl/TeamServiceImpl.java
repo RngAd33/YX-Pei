@@ -83,10 +83,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         Integer needApproval = request.getNeedApproval();
         String teamPassword = request.getTeamPassword();
         Integer status = request.getStatus();
-        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
-        if (teamStatusEnum == null) {
-            teamStatusEnum = TeamStatusEnum.PUBLIC;
-        }
         // 数据校验
         ThrowUtils.throwIf(StrUtil.isBlank(teamName) || teamName.length() > 16, ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
         ThrowUtils.throwIf(StrUtil.isNotBlank(description) && description.length() > 256, ErrorCodeEnum.PARAMS_ERROR, "描述过长！");
@@ -94,7 +90,11 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         ThrowUtils.throwIf(ObjUtil.isNotNull(expireTime) && expireTime.before(new Date()), ErrorCodeEnum.PARAMS_ERROR, "时间不能早于当前时间！");
         ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
         ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
-        // - 队伍开启加密且密码非空、不过长时，执行加密并写入数据库
+        // - 队伍开启加密且密码非空、不过长时，执行加密
+        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
+        if (teamStatusEnum == null) {
+            teamStatusEnum = TeamStatusEnum.PUBLIC;
+        }
         String encryptedPassword = null;
         if (teamStatusEnum.equals(TeamStatusEnum.SECRET)) {
             if (StrUtil.isNotBlank(teamPassword) && teamPassword.length() <= 32) {
@@ -151,21 +151,35 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         long teamId = team.getId();
         String teamName = team.getTeamName();
         String teamPassword = team.getTeamPassword();
+        Integer status = team.getStatus();
         ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         ThrowUtils.throwIf(StrUtil.isBlank(teamName), ErrorCodeEnum.PARAMS_ERROR, "名称不能为空！");
         ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
+        // - 队伍开启加密且密码非空、不过长时，执行加密
+        String encryptedPassword;
+        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
+        if (teamStatusEnum == null) {
+            teamStatusEnum = TeamStatusEnum.PUBLIC;
+        }
+        if (teamStatusEnum.equals(TeamStatusEnum.SECRET)) {
+            if (StrUtil.isNotBlank(teamPassword) && teamPassword.length() <= 32) {
+                encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
+            } else {
+                throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
+            }
+        }
         // 加锁，操作数据库
         synchronized (LockUtils.getKeyLock(loginUser.getUserName())) {
-            // - 名称查重
+            // - 同一用户最多创建5个队伍
             QueryWrapper queryWrapper = new QueryWrapper();
-            queryWrapper.eq("team_name", teamName);
+            queryWrapper.eq("leader_id", loginUser.getId());
             long count = teamMapper.selectCountByQuery(queryWrapper);
+            ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "同一用户最多创建5个队伍！");
+            // - 名称查重
+            queryWrapper.eq("team_name", teamName);
+            count = teamMapper.selectCountByQuery(queryWrapper);
             ThrowUtils.throwIf(count > 1, ErrorCodeEnum.PARAMS_ERROR, "队伍名称已存在！");
-            // - 队伍开启加密且密码不为空时，执行加密并写入数据库
-            if (team.getStatus() == 2 && StrUtil.isNotBlank(team.getTeamPassword())) {
-                String encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
-                team.setTeamPassword(encryptedPassword);
-            }
+            // - 更新数据
             return teamMapper.update(team);
         }
     }
@@ -193,6 +207,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 continue;
             }
             TeamVO teamVO = TeamVO.objToVo(team);
+            ThrowUtils.throwIf(ObjUtil.isNull(teamVO), ErrorCodeEnum.SYSTEM_ERROR, "数据转换失败！");
             User user = userService.getById(leaderId);
             User safeUser = userManager.getSafeUser(user);
             UserVO vo = UserVO.objToVo(safeUser);
@@ -268,12 +283,16 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         String description = teamQueryRequest.getDescription();
         final long leaderId = teamQueryRequest.getLeaderId();
         Integer status = teamQueryRequest.getStatus();
+        String searchText = teamQueryRequest.getSearchText();
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.eq("id", id, ObjUtil.isNotNull(id) && id > 0);
         queryWrapper.like("team_name", teamName, StrUtil.isNotBlank(teamName));
         queryWrapper.like("description", description, StrUtil.isNotBlank(description));
         queryWrapper.eq("leader_id", leaderId, ObjUtil.isNotNull(leaderId) && leaderId > 0);
         queryWrapper.eq("status", status, ObjUtil.isNotNull(status) && status > -1);
+        if (StrUtil.isNotBlank(searchText)) {
+            queryWrapper.and(TEAM.TEAM_NAME.like(searchText).or(TEAM.DESCRIPTION.like(searchText)));
+        }
         // 过期队伍不予展示
         queryWrapper.and(TEAM.EXPIRE_TIME.gt(new Date())
                 .or(TEAM.EXPIRE_TIME.isNull())
