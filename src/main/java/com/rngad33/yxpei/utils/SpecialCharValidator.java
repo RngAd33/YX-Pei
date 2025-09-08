@@ -8,7 +8,7 @@ import com.rngad33.yxpei.model.enums.misc.SpecialCharEnum;
 public class SpecialCharValidator {
 
     /**
-     * 强校验（严格防RCE、SQL注入）
+     * 强校验（防RCE、SQL注入）
      *
      * @return 是否（TF）过关
      */

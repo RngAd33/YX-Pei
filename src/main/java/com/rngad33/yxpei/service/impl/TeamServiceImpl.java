@@ -169,11 +169,15 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     public boolean teamEdit(Team team, User loginUser) {
         long teamId = team.getId();
         String teamName = team.getTeamName();
+        String description = team.getDescription();
         String teamPassword = team.getTeamPassword();
         Integer status = team.getStatus();
         ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
-        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || teamName.length() > 16, ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
+        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || SpecialCharValidator.doHighValidate(teamName) || teamName.length() > 16,
+                ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
+        ThrowUtils.throwIf(SpecialCharValidator.doLowValidate(description) || description.length() > 256,
+                ErrorCodeEnum.PARAMS_ERROR, "描述不合法！");
 
         // - 队伍开启加密且密码非空、不过长时，执行加密
         String encryptedPassword;
