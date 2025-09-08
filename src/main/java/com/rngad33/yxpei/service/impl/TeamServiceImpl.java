@@ -58,9 +58,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     private RedissonClient redissonClient;
 
     @Resource
-    private TeamMapper teamMapper;
-
-    @Resource
     private UserManager userManager;
 
     /**
