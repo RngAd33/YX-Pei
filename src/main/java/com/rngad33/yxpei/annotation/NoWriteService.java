@@ -6,15 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 权限校验注解
+ * 无需编写Service方法注解
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AuthCheck {
+public @interface NoWriteService {
 
-    /**
-     * 必须具备某个角色
-     */
-    String mustRole() default "";
+    String value() default "";
 
 }

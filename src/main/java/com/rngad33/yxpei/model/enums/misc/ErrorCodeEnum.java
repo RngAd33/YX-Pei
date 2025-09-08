@@ -16,7 +16,7 @@ public enum ErrorCodeEnum {
     USER_LOSE_ACTION("————！！操作失败！！————", 4048),
     PARAMS_ERROR("——！参数不合法！——", 4023),
     NO_PARAMS("——！参数不能为空！——", 4024),
-    SYSTEM_ERROR("————！系统内部异常！————", 5000);
+    SYSTEM_ERROR("————！！系统内部异常！！————", 5000);
 
     private final String msg;
 

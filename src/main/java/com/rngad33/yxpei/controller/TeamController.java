@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.rngad33.yxpei.annotation.AuthCheck;
+import com.rngad33.yxpei.annotation.NoWriteService;
 import com.rngad33.yxpei.common.BaseResponse;
 import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.manager.MyCacheManager;
@@ -111,6 +112,7 @@ public class TeamController {
      * @param teamQueryRequest
      * @return
      */
+    @NoWriteService
     @GetMapping("/list/page")
     public BaseResponse<Page<Team>> listTeamsByPage(TeamQueryRequest teamQueryRequest) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamQueryRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
@@ -121,11 +123,12 @@ public class TeamController {
     }
 
     /**
-     * 删除队伍
+     * 解散队伍
      *
      * @param teamManageRequest
      * @return
      */
+    @NoWriteService
     @PostMapping("/delete")
     public BaseResponse<Boolean> teamDelete(@RequestBody TeamManageRequest teamManageRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamManageRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
@@ -145,6 +148,7 @@ public class TeamController {
      * @return
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @NoWriteService
     @PostMapping("/update")
     public BaseResponse<Boolean> teamUpdate(@RequestBody TeamUpdateRequest teamUpdateRequest) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamUpdateRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
@@ -166,7 +170,7 @@ public class TeamController {
      * @throws Exception
      */
     @PostMapping("/join")
-    public BaseResponse<Boolean> teamJoin(TeamJoinRequest teamJoinRequest, HttpServletRequest request)
+    public BaseResponse<Boolean> teamJoin(@RequestBody TeamJoinRequest teamJoinRequest, HttpServletRequest request)
             throws Exception {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
@@ -182,7 +186,7 @@ public class TeamController {
      * @return
      */
     @PostMapping("/exit")
-    public BaseResponse<Boolean> teamExit(TeamExitRequest teamExitRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> teamExit(@RequestBody TeamExitRequest teamExitRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
         Boolean result = teamService.teamExit(teamExitRequest, loginUser);

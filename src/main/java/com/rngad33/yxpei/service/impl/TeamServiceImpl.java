@@ -26,6 +26,7 @@ import com.rngad33.yxpei.service.UserTeamService;
 import com.rngad33.yxpei.utils.LockUtils;
 import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.rngad33.yxpei.model.entity.table.TeamTableDef.TEAM;
 
@@ -43,6 +45,7 @@ import static com.rngad33.yxpei.model.entity.table.TeamTableDef.TEAM;
  * 队伍服务实现类
  */
 @Service
+@Slf4j
 public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements TeamService {
 
     @Resource
@@ -111,7 +114,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             // - 同一用户最多创建5个队伍
             QueryWrapper queryWrapper = new QueryWrapper();
             queryWrapper.eq("leader_id", loginUser.getId());
-            long count = teamMapper.selectCountByQuery(queryWrapper);
+//            long count = teamMapper.selectCountByQuery(queryWrapper);
+            long count = this.count(queryWrapper);
             ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "同一用户最多创建5个队伍！");
             // - 名称查重
             queryWrapper.eq("team_name", teamName);
@@ -177,11 +181,11 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             QueryWrapper queryWrapper = new QueryWrapper();
             queryWrapper.eq("leader_id", loginUser.getId());
             long count = teamMapper.selectCountByQuery(queryWrapper);
-            ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "同一用户最多创建5个队伍！");
+            ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.USER_LOSE_ACTION, "同一用户最多创建5个队伍！");
             // - 名称查重
             queryWrapper.eq("team_name", teamName);
             count = teamMapper.selectCountByQuery(queryWrapper);
-            ThrowUtils.throwIf(count > 1, ErrorCodeEnum.PARAMS_ERROR, "队伍名称已存在！");
+            ThrowUtils.throwIf(count > 1, ErrorCodeEnum.USER_LOSE_ACTION, "队伍名称已存在！");
             // - 更新数据
             return teamMapper.update(team);
         }
@@ -211,7 +215,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 continue;
             }
             TeamVO teamVO = TeamVO.objToVo(team);
-            ThrowUtils.throwIf(ObjUtil.isNull(teamVO), ErrorCodeEnum.SYSTEM_ERROR, "数据转换失败！");
+            ThrowUtils.throwIf(ObjUtil.isNull(teamVO), ErrorCodeEnum.PARAMS_ERROR, "数据转换失败！");
             User user = userService.getById(leaderId);
             User safeUser = userManager.getSafeUser(user);
             UserVO vo = UserVO.objToVo(safeUser);
@@ -231,27 +235,55 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     @Override
     public Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        Long teamId = teamJoinRequest.getTeamId();
+        long teamId = teamJoinRequest.getTeamId();
         String teamPassword = teamJoinRequest.getPassword();
         Team team = this.getById(teamId);
+        long leaderId = team.getLeaderId();
         Date expireTime = team.getExpireTime();
         Integer status = team.getStatus();
         TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
-        // 过期队伍不予加入
+        // - 过期队伍不予加入
         ThrowUtils.throwIf(ObjectUtil.isNotNull(expireTime) && expireTime.before(new Date()),
                 ErrorCodeEnum.USER_LOSE_ACTION, "队伍已过期！");
-        // 私有队伍不予加入
+        // - 私有队伍不予加入
         ThrowUtils.throwIf(TeamStatusEnum.PRIVATE.equals(teamStatusEnum),
                 ErrorCodeEnum.USER_LOSE_ACTION, "私有队伍不可加入！");
-        // 加密队伍需要校验密码
+        // - 加密队伍需要校验密码
         String encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
         ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) || teamPassword.equals(team.getTeamPassword()),
                 ErrorCodeEnum.USER_LOSE_ACTION, "密码错误！");
+        // 加分布式锁
+        RLock lock = redissonClient.getLock("yxpei:team_join");
+        try {
+            // 尝试抢锁
+            while (true) {
+                // 抢到锁，操作数据库
+                if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
+                    // - 校验已持有队伍数量
+                    QueryWrapper queryWrapper = new QueryWrapper();
+                    queryWrapper.eq("leader_id", leaderId);
+                    long count = userTeamService.count(queryWrapper);
+                    // - 不可重复加入已经加入的队伍
 
-        // 加分布式锁，操作数据库
-        RLock lock = redissonClient.getLock("yxpei:join_team");
+                    // - 校验队伍最大人数
 
-        return null;
+                    // - 修改队伍信息
+                    UserTeam userTeam = new UserTeam();
+                    userTeam.setUserId(leaderId);
+                    userTeam.setTeamId(teamId);
+                    userTeam.setJoinTime(new Date());
+                    return userTeamService.save(userTeam);
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error(e.getMessage());
+            return false;
+        } finally {
+            // 仅释放自己的锁
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
 
     /**
@@ -266,7 +298,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         Long teamId = teamExitRequest.getTeamId();
         Team team = this.getById(teamId);
-
 
         QueryWrapper queryWrapper = new QueryWrapper();
 
@@ -298,9 +329,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             queryWrapper.and(TEAM.TEAM_NAME.like(searchText).or(TEAM.DESCRIPTION.like(searchText)));
         }
         // 过期队伍不予展示
-        queryWrapper.and(TEAM.EXPIRE_TIME.gt(new Date())
-                .or(TEAM.EXPIRE_TIME.isNull())
-        );
+        queryWrapper.and(TEAM.EXPIRE_TIME.gt(new Date()).or(TEAM.EXPIRE_TIME.isNull()));
         return queryWrapper;
     }
 
