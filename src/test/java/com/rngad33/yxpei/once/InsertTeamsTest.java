@@ -2,14 +2,12 @@ package com.rngad33.yxpei.once;
 
 import cn.hutool.core.date.StopWatch;
 import com.rngad33.yxpei.model.entity.Team;
-import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.service.TeamService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;

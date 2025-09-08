@@ -10,7 +10,6 @@ import com.rngad33.yxpei.annotation.AuthCheck;
 import com.rngad33.yxpei.annotation.NoWriteService;
 import com.rngad33.yxpei.common.BaseResponse;
 import com.rngad33.yxpei.constant.UserConstant;
-import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.manager.MyCacheManager;
 import com.rngad33.yxpei.manager.UserManager;
 import com.rngad33.yxpei.model.dto.team.*;
@@ -63,7 +62,9 @@ public class TeamController {
         User loginUser = userService.getCurrentUser(request);
         // 必须登录才能操作
         ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
-        Long result = teamService.teamCreate(teamCreateRequest, loginUser);
+        Team team = new Team();
+        BeanUtil.copyProperties(teamCreateRequest, team);
+        Long result = teamService.teamCreate(team, loginUser);
         return ResultUtils.success(result);
     }
 

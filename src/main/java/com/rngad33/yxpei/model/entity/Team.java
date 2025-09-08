@@ -1,10 +1,8 @@
 package com.rngad33.yxpei.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.mybatisflex.annotation.Column;
-import com.mybatisflex.annotation.Id;
-import com.mybatisflex.annotation.KeyType;
-import com.mybatisflex.annotation.Table;
+import com.mybatisflex.annotation.*;
+import com.mybatisflex.core.mask.Masks;
 import lombok.Data;
 
 import java.util.Date;
@@ -61,6 +59,7 @@ public class Team {
     /**
      * 加入密码
      */
+    @ColumnMask(Masks.PASSWORD)
     private String teamPassword;
 
     /**
