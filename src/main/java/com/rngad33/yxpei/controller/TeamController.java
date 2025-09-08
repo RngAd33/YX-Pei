@@ -1,6 +1,7 @@
 package com.rngad33.yxpei.controller;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
@@ -9,6 +10,7 @@ import com.rngad33.yxpei.annotation.AuthCheck;
 import com.rngad33.yxpei.annotation.NoWriteService;
 import com.rngad33.yxpei.common.BaseResponse;
 import com.rngad33.yxpei.constant.UserConstant;
+import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.manager.MyCacheManager;
 import com.rngad33.yxpei.manager.UserManager;
 import com.rngad33.yxpei.model.dto.team.*;
@@ -23,6 +25,7 @@ import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -73,7 +76,7 @@ public class TeamController {
      */
     @AuthCheck(mustRole = UserConstant.DEFAULT_ROLE)
     @PostMapping("/edit")
-    public BaseResponse<Integer> teamEdit(@RequestBody TeamEditRequest teamEditRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> teamEdit(@RequestBody TeamEditRequest teamEditRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamEditRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
         // 必须登录才能操作
@@ -83,8 +86,9 @@ public class TeamController {
 //                ErrorCodeEnum.USER_NOT_AUTH, "队员不可删除队伍！");
         Team team = new Team();
         BeanUtil.copyProperties(teamEditRequest, team);
-        Integer result = teamService.teamEdit(team, loginUser);
-        return ResultUtils.success(result);
+        boolean result = teamService.teamEdit(team, loginUser);
+        ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "更新失败！");
+        return ResultUtils.success(true);
     }
 
     /**
@@ -136,8 +140,9 @@ public class TeamController {
         // 仅管理员和队长有权删除；队长只能删除自己创建的队伍，管理员可删除任何队伍
         ThrowUtils.throwIf(ObjectUtil.notEqual(loginUser.getId(), teamManageRequest.getLeaderId()) && !isAdmin,
                 ErrorCodeEnum.USER_NOT_AUTH, "队员不可删除队伍！");
-        Boolean result = teamService.removeById(teamManageRequest.getId());
-        return ResultUtils.success(result);
+        boolean result = teamService.removeById(teamManageRequest.getId());
+        ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "更新失败！");
+        return ResultUtils.success(true);
     }
 
     /**
@@ -156,8 +161,9 @@ public class TeamController {
         ThrowUtils.throwIf(StrUtil.isBlank(teamName) && leaderId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的参数！");
         Team team = new Team();
         BeanUtil.copyProperties(teamUpdateRequest, team);
-        Boolean result = teamService.updateById(team);
-        return ResultUtils.success(result);
+        boolean result = teamService.updateById(team);
+        ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "更新失败！");
+        return ResultUtils.success(true);
     }
 
     /**
@@ -166,15 +172,14 @@ public class TeamController {
      * @param teamJoinRequest
      * @param request
      * @return
-     * @throws Exception
      */
     @PostMapping("/join")
-    public BaseResponse<Boolean> teamJoin(@RequestBody TeamJoinRequest teamJoinRequest, HttpServletRequest request)
-            throws Exception {
+    public BaseResponse<Boolean> teamJoin(@RequestBody TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
-        Boolean result = teamService.teamJoin(teamJoinRequest, loginUser);
-        return ResultUtils.success(result);
+        boolean result = teamService.teamJoin(teamJoinRequest, loginUser);
+        ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "加入失败！");
+        return ResultUtils.success(true);
     }
 
     /**
@@ -188,13 +193,36 @@ public class TeamController {
     public BaseResponse<Boolean> teamExit(@RequestBody TeamExitRequest teamExitRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
-        Boolean result = teamService.teamExit(teamExitRequest, loginUser);
-        return ResultUtils.success(result);
+        boolean result = teamService.teamExit(teamExitRequest, loginUser);
+        ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "退出失败！");
+        return ResultUtils.success(true);
     }
 
     /**
-     * 队伍推荐
+     * 推荐队伍
+     *
+     * @param pageNum
+     * @param pageSize
+     * @param request
+     * @return
      */
+    @GetMapping("/recommend")
+    public BaseResponse<Page<Team>> recommendTeams(long pageNum, long pageSize, HttpServletRequest request) {
+        if (pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request)) {
+            throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
+        }
+        User loginUser = userService.getCurrentUser(request);
+        ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
+        String redisKey = String.format("yxpei:team:recommend:%s", loginUser.getId());
+        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
+        Page<Team> teamPage = (Page<Team>) valueOps.get(redisKey);
+        if (ObjUtil.isNotNull(teamPage)) {
+            // 缓存命中
+            return ResultUtils.success(teamPage);
+        }
+        myCacheManager.writeRedisFromSql(redisKey, valueOps);
+        return ResultUtils.success(teamPage);
+    }
 
     /**
      * 获取当前用户创建的队伍

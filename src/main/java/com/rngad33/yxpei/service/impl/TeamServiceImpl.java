@@ -114,12 +114,11 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             // - 同一用户最多创建5个队伍
             QueryWrapper queryWrapper = new QueryWrapper();
             queryWrapper.eq("leader_id", loginUser.getId());
-//            long count = teamMapper.selectCountByQuery(queryWrapper);
             long count = this.count(queryWrapper);
             ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "同一用户最多创建5个队伍！");
             // - 名称查重
             queryWrapper.eq("team_name", teamName);
-            count = teamMapper.selectCountByQuery(queryWrapper);
+            count = this.count(queryWrapper);
             ThrowUtils.throwIf(count > 0, ErrorCodeEnum.PARAMS_ERROR, "队伍名称已存在！");
             // - 插入队伍数据到队伍表
             Team team = new Team();
@@ -154,7 +153,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
-    public Integer teamEdit(Team team, User loginUser) {
+    public boolean teamEdit(Team team, User loginUser) {
         long teamId = team.getId();
         String teamName = team.getTeamName();
         String teamPassword = team.getTeamPassword();
@@ -180,14 +179,14 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             // - 同一用户最多创建5个队伍
             QueryWrapper queryWrapper = new QueryWrapper();
             queryWrapper.eq("leader_id", loginUser.getId());
-            long count = teamMapper.selectCountByQuery(queryWrapper);
+            long count = this.count(queryWrapper);
             ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.USER_LOSE_ACTION, "同一用户最多创建5个队伍！");
             // - 名称查重
             queryWrapper.eq("team_name", teamName);
-            count = teamMapper.selectCountByQuery(queryWrapper);
+            count = this.count(queryWrapper);
             ThrowUtils.throwIf(count > 1, ErrorCodeEnum.USER_LOSE_ACTION, "队伍名称已存在！");
             // - 更新数据
-            return teamMapper.update(team);
+            return this.updateById(team);
         }
     }
 
@@ -233,7 +232,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
-    public Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) {
+    public boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         long teamId = teamJoinRequest.getTeamId();
         String teamPassword = teamJoinRequest.getPassword();
@@ -294,14 +293,14 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
-    public Boolean teamExit(TeamExitRequest teamExitRequest, User loginUser) {
+    public boolean teamExit(TeamExitRequest teamExitRequest, User loginUser) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         Long teamId = teamExitRequest.getTeamId();
         Team team = this.getById(teamId);
 
         QueryWrapper queryWrapper = new QueryWrapper();
 
-        return null;
+        return true;
     }
 
     /**

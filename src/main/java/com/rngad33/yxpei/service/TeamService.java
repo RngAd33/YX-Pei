@@ -33,7 +33,7 @@ public interface TeamService extends IService<Team> {
      * @param loginUser
      * @return
      */
-    Integer teamEdit(Team team, User loginUser);
+    boolean teamEdit(Team team, User loginUser);
 
     /**
      * 查询队伍列表
@@ -51,7 +51,7 @@ public interface TeamService extends IService<Team> {
      * @param loginUser
      * @return
      */
-    Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser);
+    boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser);
 
     /**
      * 退出队伍
@@ -60,7 +60,7 @@ public interface TeamService extends IService<Team> {
      * @param loginUser
      * @return
      */
-    Boolean teamExit(TeamExitRequest teamExitRequest, User loginUser);
+    boolean teamExit(TeamExitRequest teamExitRequest, User loginUser);
 
     /**
      * 分页查询对象构建
