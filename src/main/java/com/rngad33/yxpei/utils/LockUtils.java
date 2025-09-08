@@ -63,13 +63,17 @@ public class LockUtils {
     }
 
     /**
-     * 粒度锁用法：
+     * 粗粒度锁用法：
      *      synchronized (LockUtils.getKeyLock(key))) {}
      */
     public static Object getKeyLock(String key) {
         return KEY_STRING_LOCK.computeIfAbsent(key, k -> new Object());
     }
 
+    /**
+     * 细粒度锁用法：
+     *      synchronized (LockUtils.getKeyLock(key))) {}
+     */
     public static Object getKeyLock(Long key) {
         return KEY_LONG_LOCK.computeIfAbsent(key, k -> new Object());
     }

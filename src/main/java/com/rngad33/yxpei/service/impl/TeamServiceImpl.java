@@ -251,7 +251,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) || teamPassword.equals(team.getTeamPassword()),
                 ErrorCodeEnum.USER_LOSE_ACTION, "密码错误！");
         // 加分布式锁
-        RLock lock = redissonClient.getLock("yxpei:team_join");
+        RLock lock = redissonClient.getLock("yxpei:team_join" + teamId);
         try {
             while (true) {
                 // 尝试抢锁，抢到后操作数据库
