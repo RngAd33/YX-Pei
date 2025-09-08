@@ -208,9 +208,8 @@ public class TeamController {
      */
     @GetMapping("/recommend")
     public BaseResponse<Page<Team>> recommendTeams(long pageNum, long pageSize, HttpServletRequest request) {
-        if (pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request)) {
-            throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
-        }
+        ThrowUtils.throwIf(pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request),
+                ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
         User loginUser = userService.getCurrentUser(request);
         ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         String redisKey = String.format("yxpei:team:recommend:%s", loginUser.getId());

@@ -262,6 +262,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                     QueryWrapper queryWrapper = new QueryWrapper();
                     queryWrapper.eq("leader_id", leaderId);
                     long count = userTeamService.count(queryWrapper);
+                    ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "队伍已满！");
                     // - 不可重复加入已经加入的队伍
 
                     // - 校验队伍最大人数
