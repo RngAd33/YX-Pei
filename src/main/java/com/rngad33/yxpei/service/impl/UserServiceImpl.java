@@ -26,12 +26,15 @@ import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +49,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private UserManager userManager;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     /**
      * 用户注册
@@ -82,31 +88,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
 
-        // 单机锁
-        synchronized (LockUtils.getKeyLock(userName)) {
-            // 账户信息查重
-            log.info("正在执行信息查重……");
-            // - 名称查重
-            QueryWrapper queryWrapper = new QueryWrapper();
-            queryWrapper.eq("user_name", userName);
-            long count = userMapper.selectCountByQuery(queryWrapper);
-            if (count > 0) {
-                log.error(ErrorConstant.USER_NAME_ALREADY_EXIST_MESSAGE);
-                throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
+        // 分布式锁
+        RLock lock = redissonClient.getLock("yxpei:user_register" + userName);
+        try {
+            while (true) {
+                if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
+                    // 账户信息查重
+                    log.info("正在执行信息查重……");
+                    // - 名称查重
+                    QueryWrapper queryWrapper = new QueryWrapper();
+                    queryWrapper.eq("user_name", userName);
+                    long count = userMapper.selectCountByQuery(queryWrapper);
+                    if (count > 0) {
+                        log.error(ErrorConstant.USER_NAME_ALREADY_EXIST_MESSAGE);
+                        throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
+                    }
+                    // 向数据库插入数据
+                    log.info("正在载入数据库……");
+                    User user = new User();
+                    user.setUserName(userName);
+                    user.setUserPassword(encryptedPassword);
+                    boolean saveResult = this.save(user);
+                    if (!saveResult) {
+                        log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
+                        throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
+                    }
+                    // 返回新账户id
+                    log.info("Correct! Successfully to register>>>");
+                    return user.getId();
+                }
             }
-            // 向数据库插入数据
-            log.info("正在载入数据库……");
-            User user = new User();
-            user.setUserName(userName);
-            user.setUserPassword(encryptedPassword);
-            boolean saveResult = this.save(user);
-            if (!saveResult) {
-                log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
-                throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-            }
-            // 返回新账户id
-            log.info("Correct! Successfully to register>>>");
-            return user.getId();
+        } catch (InterruptedException e) {
+            log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
+            throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
+        } finally {
+            lock.unlock();
         }
     }
 
