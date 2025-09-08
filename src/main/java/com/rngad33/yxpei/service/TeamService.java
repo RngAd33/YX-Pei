@@ -36,6 +36,7 @@ public interface TeamService extends IService<Team> {
      * 查询队伍列表
      *
      * @param teamQueryRequest
+     * @param isAdmin
      * @return
      */
     List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest, boolean isAdmin);
@@ -47,7 +48,7 @@ public interface TeamService extends IService<Team> {
      * @param loginUser
      * @return
      */
-    Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser) throws Exception ;
+    Boolean teamJoin(TeamJoinRequest teamJoinRequest, User loginUser);
 
     /**
      * 退出队伍

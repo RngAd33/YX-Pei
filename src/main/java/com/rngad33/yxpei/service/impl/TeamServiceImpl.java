@@ -188,6 +188,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * 查询队伍列表
      *
      * @param teamQueryRequest
+     * @param isAdmin
      * @return
      */
     @Override
