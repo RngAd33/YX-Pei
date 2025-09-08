@@ -76,12 +76,11 @@ public class TeamController {
     public BaseResponse<Integer> teamEdit(@RequestBody TeamEditRequest teamEditRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamEditRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
-        boolean isAdmin = userManager.isAdmin(loginUser);
         // 必须登录才能操作
         ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
-        // 仅队长有权编辑；队长只能编辑自己创建的队伍
-        ThrowUtils.throwIf(ObjectUtil.notEqual(loginUser.getId(), teamEditRequest.getLeaderId()) && !isAdmin,
-                ErrorCodeEnum.USER_NOT_AUTH, "队员不可删除队伍！");
+        // 仅队长和管理员有权编辑；队长只能编辑自己创建的队伍
+//        ThrowUtils.throwIf(ObjectUtil.notEqual(loginUser.getId(), teamEditRequest.getLeaderId()) && !isAdmin,
+//                ErrorCodeEnum.USER_NOT_AUTH, "队员不可删除队伍！");
         Team team = new Team();
         BeanUtil.copyProperties(teamEditRequest, team);
         Integer result = teamService.teamEdit(team, loginUser);
