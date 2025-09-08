@@ -106,7 +106,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             }
         }
         // 加锁，操作数据库
-        synchronized (LockUtils.getKeyLock(loginUser.getUserName())) {
+        synchronized (LockUtils.getKeyLock(loginUser.getId())) {
             // - 同一用户最多创建5个队伍
             QueryWrapper queryWrapper = new QueryWrapper();
             queryWrapper.eq("leader_id", loginUser.getId());
@@ -171,7 +171,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             }
         }
         // 加锁，操作数据库
-        synchronized (LockUtils.getKeyLock(loginUser.getUserName())) {
+        synchronized (LockUtils.getKeyLock(loginUser.getId())) {
             // - 同一用户最多创建5个队伍
             QueryWrapper queryWrapper = new QueryWrapper();
             queryWrapper.eq("leader_id", loginUser.getId());
