@@ -4,6 +4,8 @@ import com.rngad33.yxpei.model.enums.misc.SpecialCharEnum;
 
 /**
  * 特殊字符校验
+ *
+ * @author RngAd33
  */
 public class SpecialCharValidator {
 

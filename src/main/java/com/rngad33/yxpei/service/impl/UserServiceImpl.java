@@ -74,10 +74,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             log.error(ErrorConstant.PASSWD_NOT_REPEAT_MESSAGE);
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
+        // 密码加密
+        log.info("正在执行密码加密……");
+        String encryptedPassword = AESUtils.doEncrypt(userPassword);
+        if (encryptedPassword == null) {
+            log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
+            throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
+        }
 
         // 单机锁
         synchronized (LockUtils.getKeyLock(userName)) {
-            // 2. 账户信息查重
+            // 账户信息查重
             log.info("正在执行信息查重……");
             // - 名称查重
             QueryWrapper queryWrapper = new QueryWrapper();
@@ -87,16 +94,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 log.error(ErrorConstant.USER_NAME_ALREADY_EXIST_MESSAGE);
                 throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
             }
-
-            // 3. 密码加密
-            log.info("正在执行密码加密……");
-            String encryptedPassword = AESUtils.doEncrypt(userPassword);
-            if (encryptedPassword == null) {
-                log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
-                throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-            }
-
-            // 4. 向数据库插入数据
+            // 向数据库插入数据
             log.info("正在载入数据库……");
             User user = new User();
             user.setUserName(userName);
@@ -106,8 +104,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
                 throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
             }
-
-            // 5. 返回新账户id
+            // 返回新账户id
             log.info("Correct! Successfully to register>>>");
             return user.getId();
         }
