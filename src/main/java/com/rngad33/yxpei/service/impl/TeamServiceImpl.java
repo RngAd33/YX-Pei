@@ -87,10 +87,13 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         String teamPassword = team.getTeamPassword();
         Integer status = team.getStatus();
         // 数据校验
-        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || teamName.length() > 16, ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
-        ThrowUtils.throwIf(SpecialCharValidator.doLowValidate(description) || description.length() > 256, ErrorCodeEnum.PARAMS_ERROR, "描述不合法！");
         ThrowUtils.throwIf(maxNum <= 0 || maxNum > 30, ErrorCodeEnum.PARAMS_ERROR, "人数超出最大限制！");
-        ThrowUtils.throwIf(ObjUtil.isNotNull(expireTime) && expireTime.before(new Date()), ErrorCodeEnum.PARAMS_ERROR, "时间不能早于当前时间！");
+        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || SpecialCharValidator.doHighValidate(teamName) || teamName.length() > 16,
+                ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
+        ThrowUtils.throwIf(SpecialCharValidator.doLowValidate(description) || description.length() > 256,
+                ErrorCodeEnum.PARAMS_ERROR, "描述不合法！");
+        ThrowUtils.throwIf(ObjUtil.isNotNull(expireTime) && expireTime.before(new Date()),
+                ErrorCodeEnum.PARAMS_ERROR, "时间不能早于当前时间！");
         ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
         ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
         // - 队伍开启加密且密码非空、不过长时，执行加密
