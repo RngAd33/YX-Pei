@@ -23,6 +23,11 @@ public class SpecialCharValidator {
      * @return 是否（TF）包含
      */
     public static boolean doLowValidate(String input) {
+        // 检查是否包含攻击语句
+        if (containsHackChars(input)) {
+            System.out.println("---! HACKER !---");
+            return true;
+        }
         // 检查是否包含英文标点符号
         if (containsSpecialChars(input)) {
             System.out.println("英文标点符号！");
@@ -38,11 +43,6 @@ public class SpecialCharValidator {
             System.out.println("HTML/XML特殊字符！");
             return true;
         }
-        // 检查是否包含 SQL 注入相关字符
-        if (containsSqlInjectionChars(input)) {
-            System.out.println("SQL注入相关字符！");
-            return true;
-        }
         return false;
     }
 
@@ -50,7 +50,7 @@ public class SpecialCharValidator {
      * 检查是否全部为常规字符
      *
      * @param input
-     * @return
+     * @return 是否（TF）包含
      */
     private static boolean containsRegularChars(String input) {
         return validateWithWhitelist(input, SpecialCharEnum.NORMAL.getValue());
@@ -60,7 +60,7 @@ public class SpecialCharValidator {
      * 检查是否包含英文标点符号
      *
      * @param input
-     * @return
+     * @return 是否（TF）包含
      */
     private static boolean containsSpecialChars(String input) {
         return containsBlacklistedChars(input, SpecialCharEnum.EN_PUNCTUATION.getValue());
@@ -70,7 +70,7 @@ public class SpecialCharValidator {
      * 检查是否包含中文标点符号
      *
      * @param input
-     * @return
+     * @return 是否（TF）包含
      */
     private static boolean containsChineseSpecialChars(String input) {
         return containsBlacklistedChars(input, SpecialCharEnum.CN_PUNCTUATION.getValue());
@@ -80,7 +80,7 @@ public class SpecialCharValidator {
      * 检查是否包含空白字符
      *
      * @param input
-     * @return
+     * @return 是否（TF）包含
      */
     private static boolean containsWhiteSpaceChars(String input) {
         return containsBlacklistedChars(input, SpecialCharEnum.WHITESPACE.getValue());
@@ -90,20 +90,30 @@ public class SpecialCharValidator {
      * 检查是否包含 HTML/XML 特殊字符
      *
      * @param input
-     * @return
+     * @return 是否（TF）包含
      */
     private static boolean containsHtmlSpecialChars(String input) {
         return containsBlacklistedChars(input, SpecialCharEnum.HTML_SPECIAL.getValue());
     }
 
     /**
-     * 检查是否包含 SQL 注入相关字符
+     * 检查是否包含攻击语句
      *
      * @param input
-     * @return
+     * @return 是否（TF）包含
      */
-    private static boolean containsSqlInjectionChars(String input) {
-        return containsBlacklistedChars(input, SpecialCharEnum.SQL_INJECTION.getValue());
+    private static boolean containsHackChars(String input) {
+        return containsBlacklistedChars(input, SpecialCharEnum.SQL_INJECTION.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.DANGEROUS_COMMANDS.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.DANGEROUS_KEYWORDS.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.SHELL_METACHARACTERS.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.COMMAND_SEPARATORS.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.PATH_TRAVERSAL.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.DANGEROUS_PATHS.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.DANGEROUS_EXTENSIONS.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.DANGEROUS_FUNCTIONS.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.DANGEROUS_PROTOCOLS.getValue()) ||
+                containsBlacklistedChars(input, SpecialCharEnum.ENVIRONMENT_VARIABLES.getValue());
     }
 
     /**

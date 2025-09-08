@@ -14,6 +14,7 @@ public enum SpecialCharEnum {
     WHITESPACE("空白字符", " \t\n\r\f"),
     CONTROL_CHARS("控制字符","\u0000-\u001F\u007F-\u009F"),
     HTML_SPECIAL("HTML/XML特殊字符", "<>&\"'"),
+
     SQL_INJECTION("SQL注入相关字符","'\"\\;--"),
     DANGEROUS_COMMANDS("危险命令", "rm|shutdown|reboot|kill|halt|init|poweroff|crash|exec|system|eval|assert|passthru|shell_exec"),
     DANGEROUS_KEYWORDS("危险关键字", "exec|system|eval|assert|passthru|shell_exec|popen|proc_open|pcntl_exec|assert|create_function"),
