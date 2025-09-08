@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue';
+import {ref, watchEffect} from 'vue';
 import myAxios from "../plugins/myAxios";
 import {Toast} from "vant";
 import UserCardList from "../components/UserCardList.vue";

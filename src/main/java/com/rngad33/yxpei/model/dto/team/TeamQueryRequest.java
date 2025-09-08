@@ -2,7 +2,6 @@ package com.rngad33.yxpei.model.dto.team;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rngad33.yxpei.common.PageRequest;
-import com.rngad33.yxpei.model.entity.User;
 import lombok.Data;
 
 /**

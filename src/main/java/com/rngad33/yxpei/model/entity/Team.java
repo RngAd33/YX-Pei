@@ -8,7 +8,6 @@ import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * 队伍模型

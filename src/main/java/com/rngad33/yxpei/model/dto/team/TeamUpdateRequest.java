@@ -1,14 +1,9 @@
 package com.rngad33.yxpei.model.dto.team;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.mybatisflex.annotation.Column;
-import com.mybatisflex.annotation.Id;
-import com.mybatisflex.annotation.KeyType;
-import com.rngad33.yxpei.model.entity.User;
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * 队伍更新请求体（仅管理员）

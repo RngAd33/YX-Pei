@@ -1,7 +1,6 @@
 package com.rngad33.yxpei.cache;
 
 import jakarta.annotation.Resource;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RList;
 import org.redisson.api.RLock;
