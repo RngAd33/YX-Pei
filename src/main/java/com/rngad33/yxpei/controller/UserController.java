@@ -20,6 +20,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RBloomFilter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -40,6 +41,8 @@ public class UserController {
 
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
+
+    private RBloomFilter<String> bloomFilter;
 
     @Resource
     private UserManager userManager;
@@ -274,6 +277,11 @@ public class UserController {
         ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         // 优先查询缓存
         String redisKey = String.format("yxpei:user:recommend:%s", loginUser.getId());
+        // - 使用布隆过滤器判断key是否存在
+        if (ObjUtil.isNotNull(!bloomFilter.contains(redisKey))) {
+            // - key不存在，直接返回空页面，避免缓存穿透
+            return ResultUtils.success(new Page<>(pageNum, pageSize));
+        }
         ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
         Page<User> userPage = (Page<User>) valueOps.get(redisKey);
         if (ObjUtil.isNotNull(userPage)) {

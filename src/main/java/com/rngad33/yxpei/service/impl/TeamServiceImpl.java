@@ -171,6 +171,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         String teamName = team.getTeamName();
         String description = team.getDescription();
         String teamPassword = team.getTeamPassword();
+        Integer needApproval = team.getNeedApproval();
+        Date expireTime = team.getExpireTime();
         Integer status = team.getStatus();
         ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
@@ -178,7 +180,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
         ThrowUtils.throwIf(SpecialCharValidator.doLowValidate(description) || description.length() > 256,
                 ErrorCodeEnum.PARAMS_ERROR, "描述不合法！");
-
+        ThrowUtils.throwIf(ObjUtil.isNotNull(expireTime) && expireTime.before(new Date()),
+                ErrorCodeEnum.PARAMS_ERROR, "时间不能早于当前时间！");
+        ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
+        ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
         // - 队伍开启加密且密码非空、不过长时，执行加密
         String encryptedPassword;
         TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
