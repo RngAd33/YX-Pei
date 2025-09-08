@@ -8,30 +8,37 @@ import com.rngad33.yxpei.model.enums.misc.SpecialCharEnum;
 public class SpecialCharValidator {
 
     /**
-     * 校验入口
+     * 强校验（严格防RCE、SQL注入）
+     *
+     * @return 是否（TF）过关
+     */
+    public static boolean doHighValidate(String input) {
+        // 只能包含常规字符
+        return containsRegularChars(input);
+    }
+
+    /**
+     * 弱校验（放行部分特殊字符）
      *
      * @return 是否（TF）包含
      */
-    public static boolean doValidate(String input) {
-        // 1. 检查是否包含特殊字符
+    public static boolean doLowValidate(String input) {
+        // 检查是否包含英文标点符号
         if (containsSpecialChars(input)) {
-            System.out.println("标点符号！");
+            System.out.println("英文标点符号！");
             return true;
         }
-
-        // 2. 检查是否包含空白字符
+        // 检查是否包含空白字符
         if (containsWhiteSpaceChars(input)) {
             System.out.println("空白字符！");
             return true;
         }
-
-        // 3. 检查是否包含 HTML/XML 特殊字符
+        // 检查是否包含 HTML/XML 特殊字符
         if (containsHtmlSpecialChars(input)) {
             System.out.println("HTML/XML特殊字符！");
             return true;
         }
-
-        // 4. 检查是否包含 SQL 注入相关字符
+        // 检查是否包含 SQL 注入相关字符
         if (containsSqlInjectionChars(input)) {
             System.out.println("SQL注入相关字符！");
             return true;
@@ -40,14 +47,40 @@ public class SpecialCharValidator {
     }
 
     /**
-     * 检查是否包含标点符号
+     * 检查是否全部为常规字符
+     *
+     * @param input
+     * @return
+     */
+    private static boolean containsRegularChars(String input) {
+        return validateWithWhitelist(input, SpecialCharEnum.NORMAL.getValue());
+    }
+
+    /**
+     * 检查是否包含英文标点符号
+     *
+     * @param input
+     * @return
      */
     private static boolean containsSpecialChars(String input) {
-        return containsBlacklistedChars(input, SpecialCharEnum.SPECIAL_CHARS.getValue());
+        return containsBlacklistedChars(input, SpecialCharEnum.EN_PUNCTUATION.getValue());
+    }
+
+    /**
+     * 检查是否包含中文标点符号
+     *
+     * @param input
+     * @return
+     */
+    private static boolean containsChineseSpecialChars(String input) {
+        return containsBlacklistedChars(input, SpecialCharEnum.CN_PUNCTUATION.getValue());
     }
 
     /**
      * 检查是否包含空白字符
+     *
+     * @param input
+     * @return
      */
     private static boolean containsWhiteSpaceChars(String input) {
         return containsBlacklistedChars(input, SpecialCharEnum.WHITESPACE.getValue());
@@ -55,6 +88,9 @@ public class SpecialCharValidator {
 
     /**
      * 检查是否包含 HTML/XML 特殊字符
+     *
+     * @param input
+     * @return
      */
     private static boolean containsHtmlSpecialChars(String input) {
         return containsBlacklistedChars(input, SpecialCharEnum.HTML_SPECIAL.getValue());
@@ -62,14 +98,19 @@ public class SpecialCharValidator {
 
     /**
      * 检查是否包含 SQL 注入相关字符
+     *
+     * @param input
+     * @return
      */
     private static boolean containsSqlInjectionChars(String input) {
         return containsBlacklistedChars(input, SpecialCharEnum.SQL_INJECTION.getValue());
     }
 
     /**
-     * 黑名单校验（採用）
+     * 黑名单校验
      *
+     * @param input
+     * @param blacklist
      * @return 是否（TF）包含
      */
     private static boolean containsBlacklistedChars(String input, String blacklist) {
@@ -83,6 +124,10 @@ public class SpecialCharValidator {
 
     /**
      * 白名单校验
+     *
+     * @param input
+     * @param whitelist
+     * @return 是否（TF）过关
      */
     private static boolean validateWithWhitelist(String input, String whitelist) {
         for (char c : input.toCharArray()) {

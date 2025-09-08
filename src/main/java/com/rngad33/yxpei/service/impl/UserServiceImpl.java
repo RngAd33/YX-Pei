@@ -65,7 +65,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
         // - 账户名称不能包含特殊字符
-        if (SpecialCharValidator.doValidate(userName)) {
+        if (SpecialCharValidator.doHighValidate(userName)) {
             log.error(ErrorConstant.USER_HAVE_SPECIAL_CHAR_MESSAGE);
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
@@ -126,7 +126,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 1. 信息校验
         ThrowUtils.throwIf(request == null, ErrorCodeEnum.PARAMS_ERROR, "HTTP请求无效！");
         // - 账户名称不能包含特殊字符
-        if (SpecialCharValidator.doValidate(userName)) {
+        if (SpecialCharValidator.doHighValidate(userName)) {
             log.error(ErrorConstant.USER_HAVE_SPECIAL_CHAR_MESSAGE);
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
