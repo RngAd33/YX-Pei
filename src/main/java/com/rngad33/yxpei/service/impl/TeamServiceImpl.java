@@ -73,9 +73,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Long teamCreate(Team team, User loginUser) {
-        // 数据准备
+        // 数据校验
         ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         String teamName = team.getTeamName();
@@ -86,7 +86,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         Integer needApproval = team.getNeedApproval();
         String teamPassword = team.getTeamPassword();
         Integer status = team.getStatus();
-        // 数据校验
         ThrowUtils.throwIf(maxNum <= 0 || maxNum > 30, ErrorCodeEnum.PARAMS_ERROR, "人数超出最大限制！");
         ThrowUtils.throwIf(StrUtil.isBlank(teamName) || SpecialCharValidator.doHighValidate(teamName) || teamName.length() > 16,
                 ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
@@ -109,32 +108,34 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
             }
         }
+        // - 同一用户最多创建5个队伍
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("leader_id", loginUser.getId());
+        long count = this.count(queryWrapper);
+        ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "同一用户最多创建5个队伍！");
+        // - 名称查重
+        queryWrapper.clear();
+        queryWrapper.eq("team_name", teamName);
+        count = this.count(queryWrapper);
+        ThrowUtils.throwIf(count > 0, ErrorCodeEnum.PARAMS_ERROR, "队伍名称已存在！");
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_create" + leaderId);
         try {
             while (true) {
                 // 抢锁，抢到后操作数据库
                 if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
-                    // - 同一用户最多创建5个队伍
-                    QueryWrapper queryWrapper = new QueryWrapper();
-                    queryWrapper.eq("leader_id", loginUser.getId());
-                    long count = this.count(queryWrapper);
-                    ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "同一用户最多创建5个队伍！");
-                    // - 名称查重
-                    queryWrapper.eq("team_name", teamName);
-                    count = this.count(queryWrapper);
-                    ThrowUtils.throwIf(count > 0, ErrorCodeEnum.PARAMS_ERROR, "队伍名称已存在！");
                     // - 插入队伍数据到队伍表
-                    team.setTeamName(teamName);
-                    team.setDescription(description);
-                    team.setMaxNum(maxNum);
-                    team.setExpireTime(expireTime);
-                    team.setLeaderId(loginUser.getId());
-                    team.setNeedApproval(needApproval);
-                    team.setStatus(status);
-                    team.setTeamPassword(encryptedPassword);
-                    boolean saveResult = this.save(team);
-                    Long teamId = team.getId();
+                    Team newTeam = new Team();
+                    newTeam.setTeamName(teamName);
+                    newTeam.setDescription(description);
+                    newTeam.setMaxNum(maxNum);
+                    newTeam.setExpireTime(expireTime);
+                    newTeam.setLeaderId(loginUser.getId());
+                    newTeam.setNeedApproval(needApproval);
+                    newTeam.setStatus(status);
+                    newTeam.setTeamPassword(encryptedPassword);
+                    boolean saveResult = this.save(newTeam);
+                    Long teamId = newTeam.getId();
                     ThrowUtils.throwIf(!saveResult, ErrorCodeEnum.PARAMS_ERROR, "队伍数据插入失败！");
                     // - 插入映射数据到关系表
                     UserTeam userTeam = new UserTeam();
@@ -198,22 +199,22 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
             }
         }
+        // - 同一用户最多创建5个队伍
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("leader_id", loginUser.getId());
+        long count = this.count(queryWrapper);
+        ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.USER_LOSE_ACTION, "同一用户最多创建5个队伍！");
+        // - 名称查重
+        queryWrapper.eq("team_name", teamName);
+        count = this.count(queryWrapper);
+        ThrowUtils.throwIf(count > 1, ErrorCodeEnum.USER_LOSE_ACTION, "队伍名称已存在！");
+
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_edit" + teamId);
         try {
             while (true) {
                 // 抢锁，抢到后操作数据库
                 if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
-                    QueryWrapper queryWrapper = new QueryWrapper();
-                    // - 同一用户最多创建5个队伍
-                    queryWrapper.eq("leader_id", loginUser.getId());
-                    long count = this.count(queryWrapper);
-                    ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.USER_LOSE_ACTION, "同一用户最多创建5个队伍！");
-                    // - 名称查重
-                    queryWrapper.eq("team_name", teamName);
-                    count = this.count(queryWrapper);
-                    ThrowUtils.throwIf(count > 1, ErrorCodeEnum.USER_LOSE_ACTION, "队伍名称已存在！");
-                    // - 更新数据
                     return this.updateById(team);
                 }
             }
@@ -292,26 +293,26 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         String encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
         ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) || teamPassword.equals(team.getTeamPassword()),
                 ErrorCodeEnum.USER_LOSE_ACTION, "密码错误！");
+        // - 校验已持有队伍数量
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("leader_id", leaderId);
+        long count = userTeamService.count(queryWrapper);
+        ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "持有队伍数量已达上限！");
+        // - 不可重复加入已经加入的队伍
+        queryWrapper.clear();
+        queryWrapper.eq("team_id", teamId);
+        count = userTeamService.count(queryWrapper);
+        ThrowUtils.throwIf(count > 0, ErrorCodeEnum.PARAMS_ERROR, "已加入该队伍！");
+        // - 是否超员
+        count = this.countTeamUserByTeamId(teamId);
+        ThrowUtils.throwIf(count >= team.getMaxNum(), ErrorCodeEnum.PARAMS_ERROR, "队伍已满员！");
+
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_join" + teamId);
         try {
             while (true) {
                 // 尝试抢锁，抢到后操作数据库
                 if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
-                    // - 校验已持有队伍数量
-                    QueryWrapper queryWrapper = new QueryWrapper();
-                    queryWrapper.eq("leader_id", leaderId);
-                    long count = userTeamService.count(queryWrapper);
-                    ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "持有队伍数量已达上限！");
-                    // - 不可重复加入已经加入的队伍
-                    queryWrapper.eq("team_id", teamId);
-                    count = userTeamService.count(queryWrapper);
-                    ThrowUtils.throwIf(count > 0, ErrorCodeEnum.PARAMS_ERROR, "已加入该队伍！");
-                    // - 是否超员
-                    queryWrapper = new QueryWrapper();
-                    queryWrapper.eq("team_id", teamId);
-                    count = userTeamService.count(queryWrapper);
-                    ThrowUtils.throwIf(count >= team.getMaxNum(), ErrorCodeEnum.PARAMS_ERROR, "队伍已满员！");
                     // - 修改队伍信息
                     UserTeam userTeam = new UserTeam();
                     userTeam.setUserId(leaderId);
@@ -376,6 +377,18 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         // 过期队伍不予展示
         queryWrapper.and(TEAM.EXPIRE_TIME.gt(new Date()).or(TEAM.EXPIRE_TIME.isNull()));
         return queryWrapper;
+    }
+
+    /**
+     * 获取某队伍当前人数
+     *
+     * @param teamId
+     * @return
+     */
+    private long countTeamUserByTeamId(long teamId) {
+        QueryWrapper userTeamQueryWrapper = new QueryWrapper();
+        userTeamQueryWrapper.eq("teamId", teamId);
+        return userTeamService.count(userTeamQueryWrapper);
     }
 
 }
