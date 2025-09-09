@@ -75,7 +75,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long teamCreate(Team team, User loginUser) {
-        // 数据校验
         ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         String teamName = team.getTeamName();
@@ -84,39 +83,13 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         Date expireTime = team.getExpireTime();
         final long leaderId = team.getLeaderId();
         Integer needApproval = team.getNeedApproval();
-        String teamPassword = team.getTeamPassword();
         Integer status = team.getStatus();
-        ThrowUtils.throwIf(maxNum <= 0 || maxNum > 30, ErrorCodeEnum.PARAMS_ERROR, "人数超出最大限制！");
-        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || SpecialCharValidator.doHighValidate(teamName) || teamName.length() > 16,
-                ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
-        ThrowUtils.throwIf(SpecialCharValidator.doLowValidate(description) || description.length() > 256,
-                ErrorCodeEnum.PARAMS_ERROR, "描述不合法！");
-        ThrowUtils.throwIf(ObjUtil.isNotNull(expireTime) && expireTime.before(new Date()),
-                ErrorCodeEnum.PARAMS_ERROR, "时间不能早于当前时间！");
-        ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
-        ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
-        // - 队伍开启加密且密码非空、不过长时，执行加密
-        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
-        if (ObjUtil.isNull(teamStatusEnum)) {
-            // 默认公开
-            teamStatusEnum = TeamStatusEnum.PUBLIC;
-        }
-        String encryptedPassword = null;
-        if (teamStatusEnum.equals(TeamStatusEnum.SECRET)) {
-            ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) && teamPassword.length() > 32,
-                    ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
-            encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
-        }
-        // - 同一用户最多创建5个队伍
-        QueryWrapper queryWrapper = new QueryWrapper();
-        queryWrapper.eq("leader_id", loginUser.getId());
-        long count = this.count(queryWrapper);
-        ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "同一用户最多创建5个队伍！");
-        // - 名称查重
-        queryWrapper.clear();
-        queryWrapper.eq("team_name", teamName);
-        count = this.count(queryWrapper);
-        ThrowUtils.throwIf(count > 0, ErrorCodeEnum.PARAMS_ERROR, "队伍名称已存在！");
+        String teamPassword = team.getTeamPassword();
+        // - 处理密码
+        String encryptedPassword = doPasswordValidateAndGetEncryptedPassword(status, teamPassword);
+        // - 校验其它数据
+        doCommonDataValidate(team, loginUser, teamName, description, expireTime, needApproval, status, teamPassword);
+
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_create" + leaderId);
         try {
@@ -167,44 +140,18 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      */
     @Override
     public boolean teamEdit(Team team, User loginUser) {
+        ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         long teamId = team.getId();
+        ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
         String teamName = team.getTeamName();
         String description = team.getDescription();
         String teamPassword = team.getTeamPassword();
         Integer needApproval = team.getNeedApproval();
         Date expireTime = team.getExpireTime();
         Integer status = team.getStatus();
-        ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
-        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || SpecialCharValidator.doHighValidate(teamName) || teamName.length() > 16,
-                ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
-        ThrowUtils.throwIf(SpecialCharValidator.doLowValidate(description) || description.length() > 256,
-                ErrorCodeEnum.PARAMS_ERROR, "描述不合法！");
-        ThrowUtils.throwIf(ObjUtil.isNotNull(expireTime) && expireTime.before(new Date()),
-                ErrorCodeEnum.PARAMS_ERROR, "时间不能早于当前时间！");
-        ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
-        ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
-        // - 队伍开启加密且密码非空、不过长时，执行加密
-        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
-        if (ObjUtil.isNull(teamStatusEnum)) {
-            // 默认公开
-            teamStatusEnum = TeamStatusEnum.PUBLIC;
-        }
-        String encryptedPassword = null;
-        if (teamStatusEnum.equals(TeamStatusEnum.SECRET)) {
-            ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) && teamPassword.length() > 32,
-                    ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
-            encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
-        }
-        // - 同一用户最多创建5个队伍
-        QueryWrapper queryWrapper = new QueryWrapper();
-        queryWrapper.eq("leader_id", loginUser.getId());
-        long count = this.count(queryWrapper);
-        ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.USER_LOSE_ACTION, "同一用户最多创建5个队伍！");
-        // - 名称查重
-        queryWrapper.eq("team_name", teamName);
-        count = this.count(queryWrapper);
-        ThrowUtils.throwIf(count > 1, ErrorCodeEnum.USER_LOSE_ACTION, "队伍名称已存在！");
+        // - 校验其它数据
+        doCommonDataValidate(team, loginUser, teamName, description, expireTime, needApproval, status, teamPassword);
 
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_edit" + teamId);
@@ -386,6 +333,65 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         QueryWrapper userTeamQueryWrapper = new QueryWrapper();
         userTeamQueryWrapper.eq("teamId", teamId);
         return userTeamService.count(userTeamQueryWrapper);
+    }
+
+    /**
+     * 密码校验并获取加密密码
+     *
+     * @param status
+     * @param teamPassword
+     * @return encryptedPassword
+     */
+    private static String doPasswordValidateAndGetEncryptedPassword(Integer status, String teamPassword) {
+        // - 队伍开启加密且密码非空、不过长时，执行加密
+        TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
+        if (ObjUtil.isNull(teamStatusEnum)) {
+            // 默认公开
+            teamStatusEnum = TeamStatusEnum.PUBLIC;
+        }
+        String encryptedPassword = null;
+        if (teamStatusEnum.equals(TeamStatusEnum.SECRET)) {
+            ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) && teamPassword.length() > 32,
+                    ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
+            encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
+        }
+        return encryptedPassword;
+    }
+
+    /**
+     * 通用数据校验方法
+     *
+     * @param team
+     * @param loginUser
+     * @param teamName
+     * @param description
+     * @param expireTime
+     * @param needApproval
+     * @param status
+     * @param teamPassword
+     */
+    private void doCommonDataValidate(Team team, User loginUser, String teamName, String description, Date expireTime,
+                                      Integer needApproval, Integer status, String teamPassword) {
+        ThrowUtils.throwIf(StrUtil.isBlank(teamName) || SpecialCharValidator.doHighValidate(teamName) || teamName.length() > 16,
+                ErrorCodeEnum.PARAMS_ERROR, "名称不合法！");
+        ThrowUtils.throwIf(SpecialCharValidator.doLowValidate(description) || description.length() > 256,
+                ErrorCodeEnum.PARAMS_ERROR, "描述不合法！");
+        ThrowUtils.throwIf(ObjUtil.isNotNull(expireTime) && expireTime.before(new Date()),
+                ErrorCodeEnum.PARAMS_ERROR, "时间不能早于当前时间！");
+        ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
+        ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
+        // - 处理密码
+        String encryptedPassword = doPasswordValidateAndGetEncryptedPassword(status, teamPassword);
+        team.setTeamPassword(encryptedPassword);
+        // - 同一用户最多创建5个队伍
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("leader_id", loginUser.getId());
+        long count = this.count(queryWrapper);
+        ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.USER_LOSE_ACTION, "同一用户最多创建5个队伍！");
+        // - 名称查重
+        queryWrapper.eq("team_name", teamName);
+        count = this.count(queryWrapper);
+        ThrowUtils.throwIf(count > 1, ErrorCodeEnum.USER_LOSE_ACTION, "队伍名称已存在！");
     }
 
 }
