@@ -97,16 +97,15 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
         // - 队伍开启加密且密码非空、不过长时，执行加密
         TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
-        if (teamStatusEnum == null) {
+        if (ObjUtil.isNull(teamStatusEnum)) {
+            // 默认公开
             teamStatusEnum = TeamStatusEnum.PUBLIC;
         }
         String encryptedPassword = null;
         if (teamStatusEnum.equals(TeamStatusEnum.SECRET)) {
-            if (StrUtil.isNotBlank(teamPassword) && teamPassword.length() <= 32) {
-                encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
-            } else {
-                throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
-            }
+            ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) && teamPassword.length() > 32,
+                    ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
+            encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
         }
         // - 同一用户最多创建5个队伍
         QueryWrapper queryWrapper = new QueryWrapper();
@@ -186,18 +185,16 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
         ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
         // - 队伍开启加密且密码非空、不过长时，执行加密
-        String encryptedPassword;
         TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
-        if (teamStatusEnum == null) {
+        if (ObjUtil.isNull(teamStatusEnum)) {
+            // 默认公开
             teamStatusEnum = TeamStatusEnum.PUBLIC;
         }
+        String encryptedPassword = null;
         if (teamStatusEnum.equals(TeamStatusEnum.SECRET)) {
-            if (StrUtil.isNotBlank(teamPassword) && teamPassword.length() <= 32) {
-                encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
-                team.setTeamPassword(encryptedPassword);
-            } else {
-                throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
-            }
+            ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) && teamPassword.length() > 32,
+                    ErrorCodeEnum.PARAMS_ERROR, "开启加密必须设置合理密码！");
+            encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
         }
         // - 同一用户最多创建5个队伍
         QueryWrapper queryWrapper = new QueryWrapper();
