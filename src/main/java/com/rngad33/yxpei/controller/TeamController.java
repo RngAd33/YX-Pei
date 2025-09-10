@@ -137,6 +137,7 @@ public class TeamController {
     public BaseResponse<Boolean> teamDelete(@RequestBody TeamManageRequest teamManageRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamManageRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
+        ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         boolean isAdmin = userManager.isAdmin(loginUser);
         // 仅管理员和队长有权删除；队长只能删除自己创建的队伍，管理员可删除任何队伍
         ThrowUtils.throwIf(ObjectUtil.notEqual(loginUser.getId(), teamManageRequest.getLeaderId()) && !isAdmin,
@@ -178,6 +179,7 @@ public class TeamController {
     public BaseResponse<Boolean> teamJoin(@RequestBody TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamJoinRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
+        ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         boolean result = teamService.teamJoin(teamJoinRequest, loginUser);
         ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "加入失败！");
         return ResultUtils.success(true);
@@ -194,7 +196,10 @@ public class TeamController {
     public BaseResponse<Boolean> teamExit(@RequestBody TeamExitRequest teamExitRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
-        boolean result = teamService.teamExit(teamExitRequest, loginUser);
+        ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
+        long teamId = teamExitRequest.getTeamId();
+        ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
+        boolean result = teamService.teamExit(teamId, loginUser);
         ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "退出失败！");
         return ResultUtils.success(true);
     }

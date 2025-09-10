@@ -89,7 +89,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         String encryptedPassword = doPasswordValidateAndGetEncryptedPassword(status, teamPassword);
         // - 校验其它数据
         doCommonDataValidate(team, loginUser, teamName, description, expireTime, needApproval, status, teamPassword);
-
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_create" + leaderId);
         try {
@@ -152,7 +151,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         Integer status = team.getStatus();
         // - 校验其它数据
         doCommonDataValidate(team, loginUser, teamName, description, expireTime, needApproval, status, teamPassword);
-
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_edit" + teamId);
         try {
@@ -234,9 +232,11 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         ThrowUtils.throwIf(TeamStatusEnum.PRIVATE.equals(teamStatusEnum),
                 ErrorCodeEnum.USER_LOSE_ACTION, "私有队伍不可加入！");
         // - 加密队伍需要校验密码
-        String encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
-        ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) || teamPassword.equals(team.getTeamPassword()),
-                ErrorCodeEnum.USER_LOSE_ACTION, "密码错误！");
+        if (TeamStatusEnum.SECRET.equals(teamStatusEnum)) {
+            String encryptedPassword = DigestUtils.md5DigestAsHex((SALT + teamPassword).getBytes(StandardCharsets.UTF_8));
+            ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) || encryptedPassword.equals(team.getTeamPassword()),
+                    ErrorCodeEnum.USER_LOSE_ACTION, "密码错误！");
+        }
         // - 校验已持有队伍数量
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.eq("leader_id", leaderId);
@@ -250,7 +250,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         // - 是否超员
         count = this.countTeamUserByTeamId(teamId);
         ThrowUtils.throwIf(count >= team.getMaxNum(), ErrorCodeEnum.PARAMS_ERROR, "队伍已满员！");
-
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_join" + teamId);
         try {
@@ -279,19 +278,64 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     /**
      * 退出队伍
      *
-     * @param teamExitRequest
+     * @param teamId
      * @param loginUser
      * @return
      */
     @Override
-    public boolean teamExit(TeamExitRequest teamExitRequest, User loginUser) {
-        ThrowUtils.throwIf(ObjectUtil.isNull(teamExitRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        Long teamId = teamExitRequest.getTeamId();
+    public boolean teamExit(long teamId, User loginUser) {
+        ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
         Team team = this.getById(teamId);
-
-        QueryWrapper queryWrapper = new QueryWrapper();
-//        userTeamService.removeById();
-        return true;
+        final long userId = loginUser.getId();
+        UserTeam userTeam = new UserTeam();
+        userTeam.setUserId(userId);
+        userTeam.setTeamId(teamId);
+        // 加分布式锁
+        RLock lock = redissonClient.getLock("yxpei:team_exit" + teamId);
+        try {
+            while (true) {
+                if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
+                    QueryWrapper queryWrapper = new QueryWrapper();
+                    long count = userTeamService.count(queryWrapper);
+                    ThrowUtils.throwIf(count <= 0, ErrorCodeEnum.PARAMS_ERROR, "未加入该队伍！");
+                    count = this.countTeamUserByTeamId(teamId);
+                    if (count > 0) {
+                        // 队伍还剩至少一人
+                        if (team.getLeaderId() == userId) {
+                            // 队长退出自动把队伍顺位给最早加入的用户
+                            // - 查询所有队员的入队时间
+                            queryWrapper.clear();
+                            queryWrapper.eq("team_id", teamId);
+                            queryWrapper.orderBy("join_time").limit(2);
+                            List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
+                            ThrowUtils.throwIf(CollectionUtils.isEmpty(userTeamList) || userTeamList.isEmpty(),
+                                    ErrorCodeEnum.SYSTEM_ERROR, "队伍无成员！");
+                            UserTeam nextUserTeam = userTeamList.get(1);
+                            long nextUserId = nextUserTeam.getUserId();
+                            // - 更新当前队伍的队长
+                            Team newTeam = new Team();
+                            newTeam.setId(teamId);
+                            newTeam.setLeaderId(nextUserId);
+                            boolean result = this.updateById(newTeam);
+                            ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "更新失败！");
+                        }
+                    } else {
+                        // 队伍已无人，直接解散
+                        this.removeById(teamId);
+                    }
+                    // 移除关系
+                    return userTeamService.removeById(queryWrapper);
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error(e.getMessage());
+            return false;
+        } finally {
+            // 仅释放自己的锁
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
 
     /**
@@ -378,8 +422,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 ErrorCodeEnum.PARAMS_ERROR, "描述不合法！");
         ThrowUtils.throwIf(ObjUtil.isNotNull(expireTime) && expireTime.before(new Date()),
                 ErrorCodeEnum.PARAMS_ERROR, "时间不能早于当前时间！");
-        ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR);
-        ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR);
+        ThrowUtils.throwIf(needApproval != 0 && needApproval != 1, ErrorCodeEnum.PARAMS_ERROR, "参数无效！");
+        ThrowUtils.throwIf(status != 0 && status != 1 && status != 2, ErrorCodeEnum.PARAMS_ERROR, "参数无效！");
         // - 处理密码
         String encryptedPassword = doPasswordValidateAndGetEncryptedPassword(status, teamPassword);
         team.setTeamPassword(encryptedPassword);

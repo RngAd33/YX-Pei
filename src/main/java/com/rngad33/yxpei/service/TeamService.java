@@ -55,11 +55,11 @@ public interface TeamService extends IService<Team> {
     /**
      * 退出队伍
      *
-     * @param teamExitRequest
+     * @param teamId
      * @param loginUser
      * @return
      */
-    boolean teamExit(TeamExitRequest teamExitRequest, User loginUser);
+    boolean teamExit(long teamId, User loginUser);
 
     /**
      * 分页查询对象构建
