@@ -44,6 +44,15 @@ public interface TeamService extends IService<Team> {
     List<TeamVO> listTeams(TeamQueryRequest teamQueryRequest, boolean isAdmin);
 
     /**
+     * 解散队伍
+     *
+     * @param teamId
+     * @param loginUser
+     * @return
+     */
+    boolean teamDestroy(long teamId, User loginUser);
+
+    /**
      * 加入队伍
      *
      * @param teamJoinRequest

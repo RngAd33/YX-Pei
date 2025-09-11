@@ -149,13 +149,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         Integer needApproval = team.getNeedApproval();
         Date expireTime = team.getExpireTime();
         Integer status = team.getStatus();
-        // - 校验其它数据
+        // 校验数据
         doCommonDataValidate(team, loginUser, teamName, description, expireTime, needApproval, status, teamPassword);
         // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:team_edit" + teamId);
         try {
             while (true) {
-                // 抢锁，抢到后操作数据库
                 if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
                     return this.updateById(team);
                 }
@@ -164,7 +163,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             log.error(e.getMessage());
             return false;
         } finally {
-            // 仅释放自己的锁
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
@@ -203,6 +201,30 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             teamUserVOList.add(teamVO);
         }
         return teamUserVOList;
+    }
+
+    /**
+     * 解散队伍
+     *
+     * @param teamId
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public boolean teamDestroy(long teamId, User loginUser) {
+        // 校验队伍是否存在
+        Team team = this.getById(teamId);
+        ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "队伍不存在！");
+        // 校验当前用户是否为队长
+        long leaderId = team.getLeaderId();
+        ThrowUtils.throwIf(!loginUser.getId().equals(leaderId), ErrorCodeEnum.USER_NOT_AUTH, "队员无权解散！");
+        // 移除所有加入队伍的关联信息
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("team_id", teamId);
+        boolean result = userTeamService.remove(queryWrapper);
+        ThrowUtils.throwIf(!result, ErrorCodeEnum.SYSTEM_ERROR, "关联信息移除失败！");
+        // 删除队伍
+        return this.removeById(teamId);
     }
 
     /**
@@ -254,7 +276,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         RLock lock = redissonClient.getLock("yxpei:team_join" + teamId);
         try {
             while (true) {
-                // 尝试抢锁，抢到后操作数据库
                 if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
                     // - 修改队伍信息
                     UserTeam userTeam = new UserTeam();
@@ -268,7 +289,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             log.error(e.getMessage());
             return false;
         } finally {
-            // 仅释放自己的锁
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
@@ -324,14 +344,13 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                         this.removeById(teamId);
                     }
                     // 移除关系
-                    return userTeamService.removeById(queryWrapper);
+                    return userTeamService.remove(queryWrapper);
                 }
             }
         } catch (InterruptedException e) {
             log.error(e.getMessage());
             return false;
         } finally {
-            // 仅释放自己的锁
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }

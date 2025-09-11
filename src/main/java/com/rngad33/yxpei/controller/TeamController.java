@@ -133,8 +133,8 @@ public class TeamController {
      * @return
      */
     @NoWriteService
-    @PostMapping("/delete")
-    public BaseResponse<Boolean> teamDelete(@RequestBody TeamManageRequest teamManageRequest, HttpServletRequest request) {
+    @PostMapping("/destroy")
+    public BaseResponse<Boolean> teamDestroy(@RequestBody TeamManageRequest teamManageRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjectUtil.isNull(teamManageRequest), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         User loginUser = userService.getCurrentUser(request);
         ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
@@ -142,7 +142,7 @@ public class TeamController {
         // 仅管理员和队长有权删除；队长只能删除自己创建的队伍，管理员可删除任何队伍
         ThrowUtils.throwIf(ObjectUtil.notEqual(loginUser.getId(), teamManageRequest.getLeaderId()) && !isAdmin,
                 ErrorCodeEnum.USER_NOT_AUTH, "队员不可删除队伍！");
-        boolean result = teamService.removeById(teamManageRequest.getId());
+        boolean result = teamService.teamDestroy(teamManageRequest.getId(), loginUser);
         ThrowUtils.throwIf(!result, ErrorCodeEnum.USER_LOSE_ACTION, "更新失败！");
         return ResultUtils.success(true);
     }
