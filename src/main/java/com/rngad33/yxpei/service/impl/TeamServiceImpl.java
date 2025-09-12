@@ -319,7 +319,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                     long count = userTeamService.count(queryWrapper);
                     ThrowUtils.throwIf(count <= 0, ErrorCodeEnum.PARAMS_ERROR, "未加入该队伍！");
                     count = this.countTeamUserByTeamId(teamId);
-                    if (count > 0) {
+                    if (count >= 1) {
                         // 队伍还剩至少一人
                         if (team.getLeaderId() == userId) {
                             // 队长退出自动把队伍顺位给最早加入的用户
@@ -393,9 +393,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      * @return
      */
     private long countTeamUserByTeamId(long teamId) {
-        QueryWrapper userTeamQueryWrapper = new QueryWrapper();
-        userTeamQueryWrapper.eq("teamId", teamId);
-        return userTeamService.count(userTeamQueryWrapper);
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("teamId", teamId);
+        return userTeamService.count(queryWrapper);
     }
 
     /**
