@@ -259,9 +259,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             ThrowUtils.throwIf(StrUtil.isBlank(teamPassword) || encryptedPassword.equals(team.getTeamPassword()),
                     ErrorCodeEnum.USER_LOSE_ACTION, "密码错误！");
         }
-        // - 校验已持有队伍数量
+        // - 校验用户已持有队伍数量
         QueryWrapper queryWrapper = new QueryWrapper();
-        queryWrapper.eq("leader_id", leaderId);
+        queryWrapper.eq("user_id", loginUser.getId());
         long count = userTeamService.count(queryWrapper);
         ThrowUtils.throwIf(count >= 5, ErrorCodeEnum.PARAMS_ERROR, "持有队伍数量已达上限！");
         // - 不可重复加入已经加入的队伍
@@ -446,7 +446,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         // - 处理密码
         String encryptedPassword = doPasswordValidateAndGetEncryptedPassword(status, teamPassword);
         team.setTeamPassword(encryptedPassword);
-        // - 同一用户最多创建5个队伍
+        // - 同一用户最多创建和加入5个队伍
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.eq("leader_id", loginUser.getId());
         long count = this.count(queryWrapper);
