@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjUtil;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.mybatisflex.core.paginate.Page;
 import com.rngad33.yxpei.annotation.AuthCheck;
+import com.rngad33.yxpei.annotation.NoWriteService;
 import com.rngad33.yxpei.common.BaseResponse;
 import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.exception.MyException;
@@ -43,13 +44,12 @@ public class UserController {
     private RedisTemplate<String, Object> redisTemplate;
 
     @Resource
-    private RBloomFilter<String> bloomFilter;
-
-    @Resource
     private UserManager userManager;
 
     @Resource
     private UserService userService;
+
+    private RBloomFilter<String> bloomFilter;
 
     /**
      * 用户注册
@@ -127,7 +127,7 @@ public class UserController {
      * @return 用户列表
      */
     @GetMapping("/search")
-    public BaseResponse<List<User>> searchUsers(String userName, HttpServletRequest request) {
+    public BaseResponse<List<User>> searchUsers(@RequestParam("userName") String userName, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjUtil.isNull(userName), ErrorCodeEnum.NO_PARAMS, "用户名不能为空！");
         ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
         List<User> users = userService.searchUsers(userName, request);
@@ -169,8 +169,8 @@ public class UserController {
      * @param tags
      * @return
      */
-    @GetMapping("/getByTags/")
-    public BaseResponse<List<User>> getUserByTags(List<String> tags) {
+    @GetMapping("/getByTags")
+    public BaseResponse<List<User>> getUserByTags(@RequestParam("tags") List<String> tags) {
         ThrowUtils.throwIf(CollectionUtils.isEmpty(tags), ErrorCodeEnum.NO_PARAMS, "标签列表为空！");
         return ResultUtils.success(userService.searchUsersByTags(tags));
     }
@@ -265,33 +265,39 @@ public class UserController {
     /**
      * 用户推荐
      *
-     * @param pageNum
-     * @param pageSize
+     * @param num
      * @param request
      * @return
      */
     @GetMapping("/recommend")
-    public BaseResponse<Page<User>> recommendUsers(long pageNum, long pageSize, HttpServletRequest request) {
-        ThrowUtils.throwIf(pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request),
-                ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
+    public BaseResponse<List<UserVO>> recommendUsers(@RequestParam("num") long num, HttpServletRequest request) {
+        ThrowUtils.throwIf(num <= 0 || num > 20, ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
         User loginUser = userService.getCurrentUser(request);
-        ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
-        // 优先查询缓存
-        String redisKey = String.format("yxpei:user:recommend:%s", loginUser.getId());
-        // - 使用布隆过滤器判断key是否存在
-        if (!bloomFilter.contains(redisKey)) {
-            // - key不存在，直接返回空页面，避免缓存穿透
-            return ResultUtils.success(new Page<>(pageNum, pageSize));
-        }
-        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
-        Page<User> userPage = (Page<User>) valueOps.get(redisKey);
-        if (ObjUtil.isNotNull(userPage)) {
-            // - 缓存命中
-            return ResultUtils.success(userPage);
-        }
-        // - 缓存未命中，查询数据库并写入缓存
-        myCacheManager.writeRedisFromSql(redisKey, valueOps);
-        return ResultUtils.success(userPage);
+        return ResultUtils.success(userService.recommendUsers(num, loginUser));
     }
+
+//    @GetMapping("/recommend")
+//    public BaseResponse<Page<User>> recommendUsers(long pageNum, long pageSize, HttpServletRequest request) {
+//        ThrowUtils.throwIf(pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request),
+//                ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
+//        User loginUser = userService.getCurrentUser(request);
+//        ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
+//        // 优先查询缓存
+//        String redisKey = String.format("yxpei:user:recommend:%s", loginUser.getId());
+//        // - 使用布隆过滤器判断key是否存在
+//        if (!bloomFilter.contains(redisKey)) {
+//            // - key不存在，直接返回空页面，避免缓存穿透
+//            return ResultUtils.success(new Page<>(pageNum, pageSize));
+//        }
+//        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
+//        Page<User> userPage = (Page<User>) valueOps.get(redisKey);
+//        if (ObjUtil.isNotNull(userPage)) {
+//            // - 缓存命中
+//            return ResultUtils.success(userPage);
+//        }
+//        // - 缓存未命中，查询数据库并写入缓存
+//        myCacheManager.writeRedisFromSql(redisKey, valueOps);
+//        return ResultUtils.success(userPage);
+//    }
 
 }

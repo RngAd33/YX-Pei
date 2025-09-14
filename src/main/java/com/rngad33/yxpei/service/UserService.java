@@ -101,6 +101,15 @@ public interface UserService extends IService<User> {
     Integer updateUser(User user, User loginUser);
 
     /**
+     * 用户推荐
+     *
+     * @param num
+     * @param loginUser
+     * @return
+     */
+    List<UserVO> recommendUsers(long num, User loginUser);
+
+    /**
      * 获取单个用户信息
      *
      * @param user

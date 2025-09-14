@@ -50,9 +50,6 @@ public class TeamController {
     private RedisTemplate<String, Object> redisTemplate;
 
     @Resource
-    private RBloomFilter<String> bloomFilter;
-
-    @Resource
     private UserManager userManager;
 
     @Resource
@@ -63,6 +60,8 @@ public class TeamController {
 
     @Resource
     private UserTeamService userTeamService;
+
+    private RBloomFilter<String> bloomFilter;
 
     /**
      * 创建队伍
@@ -230,6 +229,7 @@ public class TeamController {
      * @param request
      * @return
      */
+    @NoWriteService
     @GetMapping("/recommend")
     public BaseResponse<Page<Team>> recommendTeams(long pageNum, long pageSize, HttpServletRequest request) {
         ThrowUtils.throwIf(pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request),
@@ -245,7 +245,7 @@ public class TeamController {
         ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
         Page<Team> teamPage = (Page<Team>) valueOps.get(redisKey);
         if (ObjUtil.isNotNull(teamPage)) {
-            // 缓存命中
+            // - 缓存命中
             return ResultUtils.success(teamPage);
         }
         myCacheManager.writeRedisFromSql(redisKey, valueOps);

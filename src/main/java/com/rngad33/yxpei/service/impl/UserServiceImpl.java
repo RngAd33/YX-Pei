@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import cn.hutool.json.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.rngad33.yxpei.constant.ErrorConstant;
@@ -20,6 +21,7 @@ import com.rngad33.yxpei.model.enums.user.UserStatusEnum;
 import com.rngad33.yxpei.model.vo.UserVO;
 import com.rngad33.yxpei.service.UserService;
 import com.rngad33.yxpei.utils.AESUtils;
+import com.rngad33.yxpei.utils.AlgorithmUtils;
 import com.rngad33.yxpei.utils.SpecialCharValidator;
 import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
@@ -27,12 +29,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springdoc.webmvc.ui.SwaggerIndexTransformer;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -62,56 +65,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public Long userRegister(String userName, String userPassword, String checkPassword) throws Exception {
-        // 1. 信息校验
+        // 信息校验
         log.info("正在执行信息校验……");
         // - 长度限制
-        if (userName.length() < 3 || userPassword.length() < 8) {
-            log.error(ErrorConstant.LENGTH_ERROR_MESSAGE);
-            throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(userName.length() < 3 || userPassword.length() < 8,
+                ErrorCodeEnum.PARAMS_ERROR,  "名称或密码长度过短！");
         // - 账户名称不能包含特殊字符
-        if (SpecialCharValidator.doHighValidate(userName)) {
-            log.error(ErrorConstant.USER_HAVE_SPECIAL_CHAR_MESSAGE);
-            throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(!SpecialCharValidator.doHighValidate(userName), ErrorCodeEnum.PARAMS_ERROR, "--Hacker!--");
         // - 密码和确认密码必须一致
-        if (!userPassword.equals(checkPassword)) {
-            log.error(ErrorConstant.PASSWD_NOT_REPEAT_MESSAGE);
-            throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(!userPassword.equals(checkPassword), ErrorCodeEnum.PARAMS_ERROR, "确认密码不一致！");
+        // 名称查重
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("user_name", userName);
+        long count = this.count(queryWrapper);
+        ThrowUtils.throwIf(count > 0, ErrorCodeEnum.PARAMS_ERROR, "账户名称已存在！");
         // 密码加密
-        log.info("正在执行密码加密……");
         String encryptedPassword = AESUtils.doEncrypt(userPassword);
-        if (encryptedPassword == null) {
-            log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
-            throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-        }
-
-        // 分布式锁
+        ThrowUtils.throwIf(StrUtil.isBlank(encryptedPassword), ErrorCodeEnum.PARAMS_ERROR, "加密出错！");
+        // 加分布式锁
         RLock lock = redissonClient.getLock("yxpei:user_register" + userName);
         try {
             while (true) {
                 if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
-                    // 账户信息查重
-                    log.info("正在执行信息查重……");
-                    // - 名称查重
-                    QueryWrapper queryWrapper = new QueryWrapper();
-                    queryWrapper.eq("user_name", userName);
-                    long count = userMapper.selectCountByQuery(queryWrapper);
-                    if (count > 0) {
-                        log.error(ErrorConstant.USER_NAME_ALREADY_EXIST_MESSAGE);
-                        throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-                    }
                     // 向数据库插入数据
-                    log.info("正在载入数据库……");
                     User user = new User();
                     user.setUserName(userName);
                     user.setUserPassword(encryptedPassword);
                     boolean saveResult = this.save(user);
-                    if (!saveResult) {
-                        log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
-                        throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-                    }
+                    ThrowUtils.throwIf(!saveResult, ErrorCodeEnum.USER_LOSE_ACTION);
                     // 返回新账户id
                     log.info("Correct! Successfully to register>>>");
                     return user.getId();
@@ -171,7 +152,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 获取当前用户状态
+     * 获取当前用户登录态
      *
      * @param request http请求
      * @return 登录态
@@ -208,10 +189,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 用户模糊查询（基于用户名）
      *
      * @param userName 用户名
+     * @param request http请求
      * @return 用户列表
      */
     @Override
     public List<User> searchUsers(String userName, HttpServletRequest request) {
+        ThrowUtils.throwIf(StrUtil.isBlank(userName), ErrorCodeEnum.USER_LOSE_ACTION, "名称无效！");
+        ThrowUtils.throwIf(SpecialCharValidator.doHighValidate(userName), ErrorCodeEnum.PARAMS_ERROR, "--Hacker!--");
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.like("user_name", userName);
         List<User> userList = this.list(queryWrapper);
@@ -224,8 +208,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * 根据标签查询用户（基于内存过滤）
      *
-     * @param tags
-     * @return
+     * @param tags 用户标签
+     * @return 用户列表
      */
     @Override
     public List<User> searchUsersByTags(List<String> tags) {
@@ -350,6 +334,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User oldUser = userMapper.selectOneById(id);
         ThrowUtils.throwIf(oldUser == null, ErrorCodeEnum.NO_PARAMS, "用户不存在！");
         return userMapper.update(user);
+    }
+
+    /**
+     * 用户推荐
+     *
+     * @param num
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public List<UserVO> recommendUsers(long num, User loginUser) {
+        List<User> userList = this.list();
+        String tags = loginUser.getTags();
+        List<String> tagList = JSONUtil.toBean(tags, List.class, true);
+        SortedMap<Integer, Long> indexDistantMap = new TreeMap<>();
+        for (User user : userList) {
+            String userTags = user.getTags();
+            if (StrUtil.isBlank(userTags) || Objects.equals(user.getId(), loginUser.getId())) continue;
+            List<String> userTagList = JSONUtil.toBean(userTags, List.class, true);
+            int distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            indexDistantMap.put(distance, user.getId());
+        }
+        List<Integer> maxDistanceIndexList = indexDistantMap.keySet().stream().limit(num).collect(Collectors.toList());
+        return maxDistanceIndexList.stream()
+                .filter(ObjUtil::isNotNull)
+                .limit(num)
+                .map(index -> userManager.getSafeUser(userList.get(index)))
+                .map(this::getUserVO)
+                .collect(Collectors.toList());
     }
 
     /**
