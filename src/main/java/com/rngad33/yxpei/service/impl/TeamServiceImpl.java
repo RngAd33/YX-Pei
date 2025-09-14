@@ -58,7 +58,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     private UserManager userManager;
 
     /**
-     * 盐值，混淆密码
+     * 盐值，混淆入队密码用
      */
     private static final String SALT = "reg";
 
@@ -72,8 +72,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long teamCreate(Team team, User loginUser) {
-        ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
+        ThrowUtils.throwIf(ObjUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         String teamName = team.getTeamName();
         String description = team.getDescription();
         Integer maxNum = team.getMaxNum();
@@ -136,8 +136,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      */
     @Override
     public boolean teamEdit(Team team, User loginUser) {
-        ThrowUtils.throwIf(ObjectUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
-        ThrowUtils.throwIf(ObjectUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
+        ThrowUtils.throwIf(ObjUtil.isNull(team), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         long teamId = team.getId();
         ThrowUtils.throwIf(teamId <= 0, ErrorCodeEnum.PARAMS_ERROR, "无效的id！");
         String teamName = team.getTeamName();
@@ -175,7 +175,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
      */
     @Override
     public List<TeamVO> listTeams(TeamQueryRequest request, boolean isAdmin) {
-        ThrowUtils.throwIf(ObjectUtil.isNull(request), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
+        ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.PARAMS_ERROR, "无效的请求！");
         // 多条件查询
         QueryWrapper queryWrapper = this.getQueryWrapper(request);
         List<Team> teamList = this.list(queryWrapper);
@@ -190,11 +190,11 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 continue;
             }
             TeamVO teamVO = TeamVO.objToVo(team);
-            ThrowUtils.throwIf(ObjUtil.isNull(teamVO), ErrorCodeEnum.PARAMS_ERROR, "数据转换失败！");
+            ThrowUtils.throwIf(ObjUtil.isNull(teamVO), ErrorCodeEnum.PARAMS_ERROR, "视图获取失败！");
             User user = userService.getById(leaderId);
             User safeUser = userManager.getSafeUser(user);
-            UserVO vo = UserVO.objToVo(safeUser);
-            teamVO.setLeader(vo);
+            UserVO userVO = UserVO.objToVo(safeUser);
+            teamVO.setLeader(userVO);
             teamUserVOList.add(teamVO);
         }
         return teamUserVOList;
@@ -419,7 +419,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     }
 
     /**
-     * 通用数据校验方法
+     * 创建、编辑方法数据校验
      *
      * @param team
      * @param loginUser

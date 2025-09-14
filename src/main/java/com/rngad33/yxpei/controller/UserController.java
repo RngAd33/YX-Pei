@@ -42,6 +42,7 @@ public class UserController {
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Resource
     private RBloomFilter<String> bloomFilter;
 
     @Resource
@@ -278,17 +279,17 @@ public class UserController {
         // 优先查询缓存
         String redisKey = String.format("yxpei:user:recommend:%s", loginUser.getId());
         // - 使用布隆过滤器判断key是否存在
-        if (ObjUtil.isNotNull(!bloomFilter.contains(redisKey))) {
+        if (!bloomFilter.contains(redisKey)) {
             // - key不存在，直接返回空页面，避免缓存穿透
             return ResultUtils.success(new Page<>(pageNum, pageSize));
         }
         ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
         Page<User> userPage = (Page<User>) valueOps.get(redisKey);
         if (ObjUtil.isNotNull(userPage)) {
-            // 缓存命中
+            // - 缓存命中
             return ResultUtils.success(userPage);
         }
-        // 缓存未命中，查询数据库并写入缓存
+        // - 缓存未命中，查询数据库并写入缓存
         myCacheManager.writeRedisFromSql(redisKey, valueOps);
         return ResultUtils.success(userPage);
     }

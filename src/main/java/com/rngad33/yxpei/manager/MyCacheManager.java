@@ -32,12 +32,11 @@ public class MyCacheManager {
     private UserService userService;
 
     /**
-     * 缓存写入（基于Redis）
+     * 缓存写入（基于 Redis）
      *
-     * @param id
+     * @param redisKey
      */
-    public void writeRedisFromSql(Long id) {
-        String redisKey = String.format("yxpei:user:recommend:%s", id);
+    public void writeRedisFromSql(String redisKey) {
         // 查询数据库
         QueryWrapper queryWrapper = new QueryWrapper();
         Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
@@ -51,7 +50,7 @@ public class MyCacheManager {
     }
 
     /**
-     * 缓存写入（基于Redis）
+     * 缓存写入（基于 Redis）
      *
      * @param redisKey
      * @param valueOps
@@ -69,26 +68,7 @@ public class MyCacheManager {
     }
 
     /**
-     * 缓存写入（基于Redisson）
-     *
-     * @param id
-     */
-    public void writeRedissonFromSql(Long id) {
-        String redisKey = String.format("yxpei:user:recommend:%s", id);
-        // 查询数据库
-        QueryWrapper queryWrapper = new QueryWrapper();
-        Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
-        // 写缓存
-        try {
-            RBucket<Page<User>> bucket = redissonClient.getBucket(redisKey);
-            bucket.set(userPage, 60 + new Random().nextInt(50), TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.error("! Redis set key error: ", e.getMessage());
-        }
-    }
-
-    /**
-     * 缓存写入（基于Redisson）
+     * 缓存写入（基于 Redisson）
      *
      * @param redisKey
      */

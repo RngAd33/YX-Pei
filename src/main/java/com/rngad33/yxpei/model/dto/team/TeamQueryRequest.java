@@ -3,11 +3,15 @@ package com.rngad33.yxpei.model.dto.team;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rngad33.yxpei.common.PageRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.List;
 
 /**
  * 队伍查询请求体
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TeamQueryRequest extends PageRequest {
 
@@ -15,6 +19,11 @@ public class TeamQueryRequest extends PageRequest {
      * id
      */
     private Long id;
+
+    /**
+     * id 列表
+     */
+    private List<Long> idList;
 
     /**
      * 搜索关键词（同时对队伍名称和描述搜索）

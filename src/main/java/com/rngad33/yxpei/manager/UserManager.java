@@ -96,6 +96,7 @@ public class UserManager {
     /**
      * 用户脱敏
      * 使用掩码隐藏敏感信息，保障传输层安全
+     *
      * @param user 脱敏前的账户
      * @return 脱敏后的账户
      */
