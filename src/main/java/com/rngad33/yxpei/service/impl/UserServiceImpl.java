@@ -20,7 +20,6 @@ import com.rngad33.yxpei.model.enums.user.UserStatusEnum;
 import com.rngad33.yxpei.model.vo.UserVO;
 import com.rngad33.yxpei.service.UserService;
 import com.rngad33.yxpei.utils.AESUtils;
-import com.rngad33.yxpei.utils.LockUtils;
 import com.rngad33.yxpei.utils.SpecialCharValidator;
 import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;

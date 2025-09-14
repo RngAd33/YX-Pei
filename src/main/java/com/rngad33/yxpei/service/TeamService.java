@@ -2,7 +2,6 @@ package com.rngad33.yxpei.service;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
-import com.rngad33.yxpei.model.dto.team.TeamExitRequest;
 import com.rngad33.yxpei.model.dto.team.TeamJoinRequest;
 import com.rngad33.yxpei.model.dto.team.TeamQueryRequest;
 import com.rngad33.yxpei.model.entity.Team;
