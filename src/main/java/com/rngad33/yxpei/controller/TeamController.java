@@ -28,6 +28,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.redisson.api.RBloomFilter;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -66,6 +67,8 @@ public class TeamController {
     /**
      * 创建队伍
      *
+     * @param teamCreateRequest
+     * @param request
      * @return
      */
     @PostMapping("/create")
@@ -108,6 +111,7 @@ public class TeamController {
      * 查询队伍列表
      *
      * @param teamQueryRequest
+     * @param request
      * @return
      */
     @GetMapping("/list")
@@ -119,6 +123,7 @@ public class TeamController {
         User loginUser = userService.getCurrentUser(request);
         boolean isAdmin = userManager.isAdmin(loginUser);
         List<TeamVO> teamList = teamService.listTeams(teamQueryRequest, isAdmin);
+        ThrowUtils.throwIf(CollectionUtils.isEmpty(teamList), ErrorCodeEnum.SYSTEM_ERROR, "数据转换失败！");
         return ResultUtils.success(teamList);
     }
 
@@ -142,6 +147,7 @@ public class TeamController {
      * 解散队伍
      *
      * @param teamManageRequest
+     * @param request
      * @return
      */
     @NoWriteService
