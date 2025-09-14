@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 public enum SpecialCharEnum {
 
-    NORMAL("常规字符", "a-zA-Z0-9\\u4e00-\\u9fff\\u3400-\\u4dbf\\uf900-\\ufaff"),
+    NORMAL("常规字符", "0-9a-zA-Z\\u4e00-\\u9fff\\u3400-\\u4dbf\\uf900-\\ufaff"),
     EN_PUNCTUATION("英文标点符号", "!@#$%^&*()+-=[]{}|;':\",./<>?`~\\\\pS"),
     CN_PUNCTUATION("中文标点符号", "。，、；：？！“”‘’《》【】（）！￥……——；·"),
     WHITESPACE("空白字符", " \t\n\r\f"),

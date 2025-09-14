@@ -119,33 +119,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 1. 信息校验
         ThrowUtils.throwIf(request == null, ErrorCodeEnum.PARAMS_ERROR, "HTTP请求无效！");
         // - 账户名称不能包含特殊字符
-        if (SpecialCharValidator.doHighValidate(userName)) {
-            log.error(ErrorConstant.USER_HAVE_SPECIAL_CHAR_MESSAGE);
-            throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
-        }
-
+        ThrowUtils.throwIf(!SpecialCharValidator.doHighValidate(userName), ErrorCodeEnum.PARAMS_ERROR, "--Hacker!--");
         // 2. 密码加密
         String encryptedPassword = AESUtils.doEncrypt(userPassword);
-
         // 3. 连接数据库，核对用户信息
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.eq("user_name", userName);
         queryWrapper.eq("user_password", encryptedPassword);
         User user = userMapper.selectOneByQuery(queryWrapper);
         // - 判断用户是否存在
-        if (user == null) {
-            log.error(ErrorConstant.USER_NOT_EXIST_OR_PASSWORD_ERROR_RETRY_MESSAGE);
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
+        ThrowUtils.throwIf(ObjectUtil.isNull(user), ErrorCodeEnum.USER_NOT_EXIST_OR_PASSWORD_ERROR_RETRY, "用户不存在！");
         // - 判断账户是否被封禁
-        if (Objects.equals(user.getUserStatus(), UserStatusEnum.BAN_STATUS.getValue())) {
-            log.error(ErrorConstant.USER_ALREADY_BAN_MESSAGE);
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
-
+        ThrowUtils.throwIf(Objects.equals(user.getUserStatus(), UserStatusEnum.BAN_STATUS.getValue()),
+                ErrorCodeEnum.USER_NOT_AUTH, "该用户已被封禁！");
         // 4. 信息脱敏
         User safeUser = userManager.getSafeUser(user);
-
         // 5. 记录用户登录态（已脱敏）
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, safeUser);
         return safeUser;
@@ -353,8 +341,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             String userTags = user.getTags();
             if (StrUtil.isBlank(userTags) || Objects.equals(user.getId(), loginUser.getId())) continue;
             List<String> userTagList = JSONUtil.toBean(userTags, List.class, true);
+            // 计算相似分数
             int distance = AlgorithmUtils.minDistance(tagList, userTagList);
             indexDistantMap.put(distance, user.getId());
+            System.out.println(user.getId() + ": " + distance);
         }
         List<Integer> maxDistanceIndexList = indexDistantMap.keySet().stream().limit(num).collect(Collectors.toList());
         return maxDistanceIndexList.stream()

@@ -2,6 +2,8 @@ package com.rngad33.yxpei.utils;
 
 import com.rngad33.yxpei.model.enums.misc.SpecialCharEnum;
 
+import java.util.regex.*;
+
 /**
  * 特殊字符校验
  *
@@ -52,7 +54,7 @@ public class SpecialCharValidator {
      * 检查是否全部为常规字符
      *
      * @param input
-     * @return 是否（TF）包含
+     * @return 是否（TF）过关
      */
     private static boolean containsRegularChars(String input) {
         return validateWithWhitelist(input, SpecialCharEnum.NORMAL.getValue());
@@ -121,33 +123,74 @@ public class SpecialCharValidator {
     /**
      * 黑名单校验
      *
-     * @param input
-     * @param blacklist
-     * @return 是否（TF）包含
+     * @param input     待校验的输入字符串
+     * @param blacklist 黑名单字符表达式
+     * @return 是否（TF）包含黑名单字符
      */
     private static boolean containsBlacklistedChars(String input, String blacklist) {
-        for (char c : input.toCharArray()) {
-            if (blacklist.indexOf(c) != -1) {
-                return true;
-            }
+        if (input == null || input.isEmpty()) {
+            return false;
         }
-        return false;
+        try {
+            // 对于包含特殊正则语法的黑名单，直接使用正则匹配
+            if (blacklist.contains("\\") || blacklist.contains("[")) {
+                Pattern pattern = Pattern.compile("[" + blacklist + "]");
+                Matcher matcher = pattern.matcher(input);
+                return matcher.find();
+            } else {
+                // 对于简单字符列表，使用字符串查找（更高效）
+                for (char c : input.toCharArray()) {
+                    if (blacklist.indexOf(c) != -1) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        } catch (Exception e) {
+            // 出现异常时，使用安全的字符遍历方式
+            for (char c : input.toCharArray()) {
+                if (blacklist.indexOf(c) != -1) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /**
      * 白名单校验
      *
-     * @param input
-     * @param whitelist
-     * @return 是否（TF）过关
+     * @param input     待校验的输入字符串
+     * @param whitelist 白名单字符表达式
+     * @return 是否（TF）过关（只包含白名单字符）
      */
     private static boolean validateWithWhitelist(String input, String whitelist) {
-        for (char c : input.toCharArray()) {
-            if (whitelist.indexOf(c) == -1) {
-                return false;
-            }
+        if (input == null || input.isEmpty()) {
+            return true;
         }
-        return true;
+        try {
+            // 对于包含特殊正则语法的白名单（如NORMAL），使用正则匹配
+            if (whitelist.contains("\\") || whitelist.contains("[")) {
+                String regex = "^[" + whitelist + "]*$";
+                return input.matches(regex);
+            } else {
+                // 对于简单字符列表，使用字符遍历（更高效）
+                for (char c : input.toCharArray()) {
+                    if (whitelist.indexOf(c) == -1) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            // 出现异常时，使用安全的字符遍历方式
+            for (char c : input.toCharArray()) {
+                if (whitelist.indexOf(c) == -1) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
 }
