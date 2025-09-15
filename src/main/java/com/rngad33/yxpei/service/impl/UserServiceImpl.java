@@ -2,6 +2,7 @@ package com.rngad33.yxpei.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -327,25 +328,46 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         List<User> userList = this.list(queryWrapper);
         String tags = loginUser.getTags();
         List<String> tagList = JSONUtil.toBean(tags, List.class, true);
-        // 列表下标 -> 相似度
-        SortedMap<Integer, Long> indexDistantMap = new TreeMap<>();
+        // 用户列表下标 -> 相似度
+//        SortedMap<Integer, Long> indexDistantMap = new TreeMap<>(Comparator.comparingInt(o -> o));
+        List<Pair<Long, User>> list = new ArrayList<>();
+        // 依次计算所有用户和当前用户的相似度
         for (User user : userList) {
             String userTags = user.getTags();
             List<String> userTagList = JSONUtil.toBean(userTags, List.class, true);
             // - 忽略当前用户和无标签者
-            if (CollectionUtil.isEmpty(userTagList) || Objects.equals(user.getId(), loginUser.getId())) continue;
-            // 计算相似分数
-            int distance = AlgorithmUtils.minDistance(tagList, userTagList);
-            indexDistantMap.put(distance, user.getId());
+            if (CollectionUtil.isEmpty(userTagList) || ObjUtil.equals(user.getId(), loginUser.getId())) continue;
+            // - 计算相似分数
+            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            list.add(new Pair<>(distance, user));
 //            System.out.println(user.getId() + ": " + distance);
         }
-        List<Integer> maxDistanceIndexList = indexDistantMap.keySet().stream().limit(num).collect(Collectors.toList());
-        return maxDistanceIndexList.stream()
-                .filter(ObjUtil::isNotNull)
+        // 相似度排序（按编辑距离）
+        List<Pair<Long, User>> topUserPairList = list.stream()
+                .sorted(Comparator.comparingLong(Pair::getKey))
                 .limit(num)
-                .map(index -> userManager.getSafeUser(userList.get(index)))
-                .map(this::getUserVO)
                 .collect(Collectors.toList());
+        List<Long> idList = topUserPairList.stream()
+                .map(pair -> pair.getValue().getId())
+                .collect(Collectors.toList());
+        queryWrapper.clear();
+        queryWrapper.in("id", idList);
+        // 1, 3, 2
+        // User1、User2、User3
+        // 1 => User1, 2 => User2, 3 => User3
+        Map<Long, List<User>> map = this.list(queryWrapper)
+                .stream()
+                .filter(user -> !user.getId().equals(loginUser.getId()))
+                .map(userManager::getSafeUser)
+                .collect(Collectors.groupingBy(User::getId));
+        List<UserVO> finalUserList = new ArrayList<>();
+        for (Long id : idList) {
+            List<User> users = map.get(id);
+            if (users != null && !users.isEmpty()) {
+                finalUserList.add(UserVO.objToVo(users.get(0)));
+            }
+        }
+        return finalUserList;
     }
 
     /**
