@@ -1,20 +1,22 @@
 # 联机匹配系统
 
-## 技术选型
+## 基于 Vue3 + Spring Boot 的多用户联机匹配系统
+## 可用于在线聊天、多人协作等场景，通常更多地作为联机模块嵌入更大项目中；
 
-### 前端
+### 技术选型
+
+#### 前端
 - Vue 3
 - Vant UI 组件库
 - TypeScript
 - Vite 脚手架
 - Axios 请求库
 
-### 后端
-- Java SpringBoot 3.3.0 框架
+#### 后端
+- SpringBoot 3.3.0 框架
 - MySQL 数据库
-- MyBatis-Flex
-- MyBatis X 自动生成
-- Redis 缓存（Spring Data Redis 等多种实现方式）
+- MyBatis + MyBatis-Flex
+- Redis 缓存（Spring Data Redis, Redisson等多种实现方式）
 - Redisson 分布式锁
 - Easy Excel 数据导入
 - Spring Scheduler 定时任务
