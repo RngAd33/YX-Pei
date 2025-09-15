@@ -1,6 +1,7 @@
 package com.rngad33.yxpei.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -199,7 +200,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public List<User> searchUsersByTags(List<String> tags) {
         // 1. 查询所有用户
         QueryWrapper queryWrapper = new QueryWrapper();
-        List<User> userList = userMapper.selectListByQuery(queryWrapper);
+        List<User> userList = this.list(queryWrapper);
         // 2. 在内存中筛选出带有目标标签的用户（采用语法糖写法）
         return userList.stream()
                 .filter(user -> !Objects.equals(user.getRole(), UserConstant.ADMIN_ROLE))   // 过滤管理员账户
@@ -273,23 +274,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Integer userOrBan(Long id, HttpServletRequest request) {
         // 1. 查询用户是否存在
         User user = userMapper.selectOneById(id);
-        if (user == null) {
-            log.error(ErrorConstant.USER_NOT_EXIST_MESSAGE);
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
-
+        ThrowUtils.throwIf(user == null, ErrorCodeEnum.PARAMS_ERROR, "用户不存在！");
         // 2. 切换用户状态
         int currentStatus = user.getUserStatus();
         int newStatus = (currentStatus == 0) ? 1 : 0;
         user.setUserStatus(newStatus);
-
         // 3. 更新数据库
-        int updateResult = userMapper.update(user);
-        if (updateResult <= 0) {
-            log.error(ErrorConstant.USER_LOSE_ACTION_MESSAGE);
-            throw new MyException(ErrorCodeEnum.USER_LOSE_ACTION);
-        }
-
+        boolean updateResult = this.updateById(user);
+        ThrowUtils.throwIf(!updateResult, ErrorCodeEnum.USER_LOSE_ACTION, "封禁操作失败！");
         // 4. 返回操作结果
         if (newStatus != 0) {
             log.info("用户已封禁>>>");
@@ -329,14 +321,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public List<UserVO> recommendUsers(long num, User loginUser) {
-        List<User> userList = this.list();
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.select("id", "tags");
+        queryWrapper.isNotNull("tags");
+        List<User> userList = this.list(queryWrapper);
         String tags = loginUser.getTags();
         List<String> tagList = JSONUtil.toBean(tags, List.class, true);
+        // 列表下标 -> 相似度
         SortedMap<Integer, Long> indexDistantMap = new TreeMap<>();
         for (User user : userList) {
             String userTags = user.getTags();
-            if (StrUtil.isBlank(userTags) || Objects.equals(user.getId(), loginUser.getId())) continue;
             List<String> userTagList = JSONUtil.toBean(userTags, List.class, true);
+            // - 忽略当前用户和无标签者
+            if (CollectionUtil.isEmpty(userTagList) || Objects.equals(user.getId(), loginUser.getId())) continue;
             // 计算相似分数
             int distance = AlgorithmUtils.minDistance(tagList, userTagList);
             indexDistantMap.put(distance, user.getId());

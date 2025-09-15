@@ -17,6 +17,11 @@ import java.util.Date;
 public class UserVO {
 
     /**
+     * 用户 id
+     */
+    private Long id;
+
+    /**
      * 用户昵称
      */
     private String userName;
