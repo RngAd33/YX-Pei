@@ -322,44 +322,50 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public List<UserVO> recommendUsers(long num, User loginUser) {
+        // 构造查询条件：筛选有标签的用户，仅查询 id 和 tags 字段
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.select("id", "tags");
         queryWrapper.isNotNull("tags");
         List<User> userList = this.list(queryWrapper);
+        // 获取当前用户的标签列表
         String tags = loginUser.getTags();
         List<String> tagList = JSONUtil.toBean(tags, List.class, true);
         // 用户列表下标 -> 相似度
-//        SortedMap<Integer, Long> indexDistantMap = new TreeMap<>(Comparator.comparingInt(o -> o));
-        List<Pair<Long, User>> list = new ArrayList<>();
+        Map<Long, User> distanceUserMap = new HashMap<>();
         // 依次计算所有用户和当前用户的相似度
         for (User user : userList) {
             String userTags = user.getTags();
             List<String> userTagList = JSONUtil.toBean(userTags, List.class, true);
             // - 忽略当前用户和无标签者
             if (CollectionUtil.isEmpty(userTagList) || ObjUtil.equals(user.getId(), loginUser.getId())) continue;
-            // - 计算相似分数
+            // - 计算标签之间的最小编辑距离作为相似度
             long distance = AlgorithmUtils.minDistance(tagList, userTagList);
-            list.add(new Pair<>(distance, user));
+            distanceUserMap.put(distance, user);
 //            System.out.println(user.getId() + ": " + distance);
         }
-        // 相似度排序（按编辑距离）
-        List<Pair<Long, User>> topUserPairList = list.stream()
-                .sorted(Comparator.comparingLong(Pair::getKey))
+        // 取前num个用户进行相似度排序（按编辑距离）
+        List<User> topUserList = distanceUserMap.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
                 .limit(num)
+                .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
-        List<Long> idList = topUserPairList.stream()
-                .map(pair -> pair.getValue().getId())
+        // 原本顺序的 userId 列表
+        List<Long> idList = topUserList.stream()
+                .map(User::getId)
                 .collect(Collectors.toList());
-        queryWrapper.clear();
-        queryWrapper.in("id", idList);
+        // 查询完整用户信息并过滤掉当前用户
         // 1, 3, 2
         // User1、User2、User3
         // 1 => User1, 2 => User2, 3 => User3
+        queryWrapper.clear();
+        queryWrapper.in("id", idList);
         Map<Long, List<User>> map = this.list(queryWrapper)
                 .stream()
                 .filter(user -> !user.getId().equals(loginUser.getId()))
                 .map(userManager::getSafeUser)
                 .collect(Collectors.groupingBy(User::getId));
+        // 按照原始顺序构建最终的用户视图对象列表
         List<UserVO> finalUserList = new ArrayList<>();
         for (Long id : idList) {
             List<User> users = map.get(id);
