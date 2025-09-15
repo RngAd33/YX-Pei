@@ -117,6 +117,7 @@ public class AlgorithmUtils {
      * @param word2
      * @return
      */
+    @Deprecated
     public static int minDistance(String word1, String word2) {
         int n = word1.length();
         int m = word2.length();
