@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import cn.hutool.json.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.rngad33.yxpei.constant.ErrorConstant;
@@ -29,11 +28,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springdoc.webmvc.ui.SwaggerIndexTransformer;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -344,7 +340,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 计算相似分数
             int distance = AlgorithmUtils.minDistance(tagList, userTagList);
             indexDistantMap.put(distance, user.getId());
-            System.out.println(user.getId() + ": " + distance);
+//            System.out.println(user.getId() + ": " + distance);
         }
         List<Integer> maxDistanceIndexList = indexDistantMap.keySet().stream().limit(num).collect(Collectors.toList());
         return maxDistanceIndexList.stream()

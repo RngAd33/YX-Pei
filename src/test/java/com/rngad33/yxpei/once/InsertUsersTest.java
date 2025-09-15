@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -44,6 +45,7 @@ class InsertUsersTest {
             user.setTags("[]");
             user.setUserStatus(0);
             user.setRole(0);
+            user.setCreateTime(new Date());
             users.add(user);
         }
         userService.saveBatch(users, 100);
@@ -76,6 +78,7 @@ class InsertUsersTest {
                 user.setTags("[]");
                 user.setUserStatus(0);
                 user.setRole(0);
+                user.setCreateTime(new Date());
                 users.add(user);
             } while (j % INSERT_NUM != 0);
             // 异步执行

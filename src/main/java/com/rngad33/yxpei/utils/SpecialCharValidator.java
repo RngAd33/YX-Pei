@@ -2,7 +2,8 @@ package com.rngad33.yxpei.utils;
 
 import com.rngad33.yxpei.model.enums.misc.SpecialCharEnum;
 
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 特殊字符校验

@@ -48,6 +48,7 @@ public class InsertTeamsTest {
                 team.setLeaderId(1L);
                 team.setNeedApproval(0);
                 team.setStatus(0);
+                team.setCreateTime(new Date());
                 teams.add(team);
             } while (j % INSERT_NUM != 0);
             // 异步执行
