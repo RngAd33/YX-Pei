@@ -331,7 +331,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String tags = loginUser.getTags();
         List<String> tagList = JSONUtil.toBean(tags, List.class, true);
         // 用户列表下标 -> 相似度
-        Map<Long, User> distanceUserMap = new HashMap<>();
+        Map<Double, User> distanceUserMap = new HashMap<>();
         // 依次计算所有用户和当前用户的相似度
         for (User user : userList) {
             String userTags = user.getTags();
@@ -339,9 +339,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // - 忽略当前用户和无标签者
             if (CollectionUtil.isEmpty(userTagList) || ObjUtil.equals(user.getId(), loginUser.getId())) continue;
             // - 计算标签之间的最小编辑距离作为相似度
-            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            double distance = AlgorithmUtils.comprehensiveSimilarity(tagList, userTagList);
             distanceUserMap.put(distance, user);
-//            System.out.println(user.getId() + ": " + distance);
+            System.out.println(user.getId() + ": " + distance);
         }
         // 取前num个用户进行相似度排序（按编辑距离）
         List<User> topUserList = distanceUserMap.entrySet()

@@ -1,12 +1,74 @@
 package com.rngad33.yxpei.utils;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * 算法工具类
  */
 public class AlgorithmUtils {
+
+    /**
+     * 综合相似度计算（结合编辑距离和Jaccard相似度）
+     *
+     * @param tagList1 第一组标签
+     * @param tagList2 第二组标签
+     * @return 综合相似度值（0-1之间，1表示最相似）
+     */
+    public static double comprehensiveSimilarity(List<String> tagList1, List<String> tagList2) {
+        // 归一化编辑距离（转换为相似度）
+        double editSimilarity = 1.0 - normalizedDistance(tagList1, tagList2);
+
+        // Jaccard相似度
+        double jaccardSim = jaccardSimilarity(tagList1, tagList2);
+
+        // 加权平均（可以根据实际效果调整权重）
+        return 0.4 * editSimilarity + 0.6 * jaccardSim;
+    }
+
+    /**
+     * 计算归一化的编辑距离相似度（值越小越相似）
+     *
+     * @param tagList1 第一组标签
+     * @param tagList2 第二组标签
+     * @return 归一化的相似度值（0-1之间，0表示完全相同）
+     */
+    public static double normalizedDistance(List<String> tagList1, List<String> tagList2) {
+        if (tagList1.isEmpty() && tagList2.isEmpty()) {
+            return 0.0;
+        }
+
+        int distance = minDistance(tagList1, tagList2);
+        int maxLength = Math.max(tagList1.size(), tagList2.size());
+
+        return (double) distance / maxLength;
+    }
+
+    /**
+     * 计算Jaccard相似度
+     *
+     * @param tagList1 第一组标签
+     * * @param tagList2 第二组标签
+     * @return Jaccard相似度（0-1之间，1表示完全相同）
+     */
+    public static double jaccardSimilarity(List<String> tagList1, List<String> tagList2) {
+        if (tagList1.isEmpty() && tagList2.isEmpty()) {
+            return 1.0;
+        }
+
+        Set<String> set1 = new HashSet<>(tagList1);
+        Set<String> set2 = new HashSet<>(tagList2);
+
+        Set<String> intersection = new HashSet<>(set1);
+        intersection.retainAll(set2);
+
+        Set<String> union = new HashSet<>(set1);
+        union.addAll(set2);
+
+        return (double) intersection.size() / union.size();
+    }
 
     /**
      * 编辑距离算法（用于计算最相似的两组标签）
