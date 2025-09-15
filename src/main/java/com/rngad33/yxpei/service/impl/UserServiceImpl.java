@@ -341,7 +341,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // - 计算标签之间的最小编辑距离作为相似度
             double distance = AlgorithmUtils.comprehensiveSimilarity(tagList, userTagList);
             distanceUserMap.put(distance, user);
-            System.out.println(user.getId() + ": " + distance);
+//            System.out.println(user.getId() + ": " + distance);
         }
         // 取前num个用户进行相似度排序（按编辑距离）
         List<User> topUserList = distanceUserMap.entrySet()
@@ -355,11 +355,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .map(User::getId)
                 .collect(Collectors.toList());
         // 查询完整用户信息并过滤掉当前用户
+        queryWrapper.clear();
+        queryWrapper.in("id", idList);
         // 1, 3, 2
         // User1、User2、User3
         // 1 => User1, 2 => User2, 3 => User3
-        queryWrapper.clear();
-        queryWrapper.in("id", idList);
         Map<Long, List<User>> map = this.list(queryWrapper)
                 .stream()
                 .filter(user -> !user.getId().equals(loginUser.getId()))
@@ -370,7 +370,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         for (Long id : idList) {
             List<User> users = map.get(id);
             if (users != null && !users.isEmpty()) {
-                finalUserList.add(UserVO.objToVo(users.get(0)));
+                finalUserList.add(UserVO.objToVo(users.getFirst()));
             }
         }
         return finalUserList;

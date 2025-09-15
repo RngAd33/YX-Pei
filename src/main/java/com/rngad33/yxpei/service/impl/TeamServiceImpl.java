@@ -317,11 +317,11 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                     ThrowUtils.throwIf(count <= 0, ErrorCodeEnum.PARAMS_ERROR, "未加入该队伍！");
                     count = this.countTeamUserByTeamId(teamId);
                     if (count >= 1) {
-                        // 队伍还剩至少一人
+                        // - 队伍还剩至少一人
                         if (team.getLeaderId() == userId) {
-                            // 队长退出自动把队伍顺位给最早加入的用户
-                            // - 查询所有队员的入队时间
+                            // - 队长退出自动把队伍顺位给最早加入的用户
                             queryWrapper.clear();
+                            // 查询所有队员的入队时间
                             queryWrapper.eq("team_id", teamId);
                             queryWrapper.orderBy("join_time").limit(2);
                             List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
@@ -329,7 +329,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                                     ErrorCodeEnum.SYSTEM_ERROR, "队伍无成员！");
                             UserTeam nextUserTeam = userTeamList.get(1);
                             long nextUserId = nextUserTeam.getUserId();
-                            // - 更新当前队伍的队长
+                            // 更新当前队伍的队长
                             Team newTeam = new Team();
                             newTeam.setId(teamId);
                             newTeam.setLeaderId(nextUserId);
