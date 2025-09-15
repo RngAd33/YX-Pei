@@ -60,7 +60,7 @@ class InsertUsersTest {
     void doInsert2() {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        final int INSERT_NUM = 2000;
+        final int INSERT_NUM = 10000;
         int j = 0;
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         // 分10个线程
