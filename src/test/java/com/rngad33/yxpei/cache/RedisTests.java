@@ -2,14 +2,10 @@ package com.rngad33.yxpei.cache;
 
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,11 +21,8 @@ class RedisTests {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    @Resource
-    private RedissonClient redissonClient;
-
     @Test
-    public void redisTest1() {
+    void redisTest1() {
         // 获取redis操作对象
         ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
 
@@ -62,7 +55,7 @@ class RedisTests {
     }
 
     @Test
-    public void redisTest2() {
+    void redisTest2() {
         // 获取redis操作对象
         ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
 

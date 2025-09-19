@@ -20,9 +20,14 @@ public class LockUtils {
     private static final Object GLOBAL_LOCK = new Object();
 
     /**
+     * 粗粒度锁
+     */
+    private static final Map<String, Object> KEY_STRING_LOCK = new ConcurrentHashMap<>();
+
+    /**
      * 细粒度锁
      */
-    private static final Map<String, Object> KEY_LOCK = new ConcurrentHashMap<>();
+    private static final Map<Long, Object> KEY_LONG_LOCK = new ConcurrentHashMap<>();
 
     /**
      * 公平锁（悲观独占）
@@ -58,11 +63,19 @@ public class LockUtils {
     }
 
     /**
-     * 细粒度锁用法：
+     * 粗粒度锁用法：
      *      synchronized (LockUtils.getKeyLock(key))) {}
      */
     public static Object getKeyLock(String key) {
-        return KEY_LOCK.computeIfAbsent(key, k -> new Object());
+        return KEY_STRING_LOCK.computeIfAbsent(key, k -> new Object());
+    }
+
+    /**
+     * 细粒度锁用法：
+     *      synchronized (LockUtils.getKeyLock(key))) {}
+     */
+    public static Object getKeyLock(Long key) {
+        return KEY_LONG_LOCK.computeIfAbsent(key, k -> new Object());
     }
 
     /**

@@ -9,7 +9,7 @@ import com.rngad33.yxpei.constant.UserConstant;
 import com.rngad33.yxpei.exception.MyException;
 import com.rngad33.yxpei.manager.MyCacheManager;
 import com.rngad33.yxpei.manager.UserManager;
-import com.rngad33.yxpei.model.dto.*;
+import com.rngad33.yxpei.model.dto.user.*;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.model.enums.misc.ErrorCodeEnum;
 import com.rngad33.yxpei.model.vo.UserVO;
@@ -20,9 +20,9 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RBloomFilter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,13 +39,15 @@ public class UserController {
     private MyCacheManager myCacheManager;
 
     @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Resource
     private UserManager userManager;
 
     @Resource
     private UserService userService;
 
-    @Resource
-    private RedisTemplate redisTemplate;
+    private RBloomFilter<String> bloomFilter;
 
     /**
      * 用户注册
@@ -123,7 +125,7 @@ public class UserController {
      * @return 用户列表
      */
     @GetMapping("/search")
-    public BaseResponse<List<User>> searchUsers(String userName, HttpServletRequest request) {
+    public BaseResponse<List<User>> searchUsers(@RequestParam("userName") String userName, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjUtil.isNull(userName), ErrorCodeEnum.NO_PARAMS, "用户名不能为空！");
         ThrowUtils.throwIf(ObjUtil.isNull(request), ErrorCodeEnum.USER_LOSE_ACTION, "HTTP请求无效！");
         List<User> users = userService.searchUsers(userName, request);
@@ -132,6 +134,9 @@ public class UserController {
 
     /**
      * 根据id查询用户（管理员）
+     *
+     * @param id
+     * @return
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @GetMapping("/get")
@@ -151,7 +156,7 @@ public class UserController {
     @GetMapping("/get/vo")
     public BaseResponse<UserVO> getUserVOById(long id) {
         ThrowUtils.throwIf(id <= 0, ErrorCodeEnum.PARAMS_ERROR, "id无效！");
-        BaseResponse<User> response = getUserById(id);
+        BaseResponse<User> response = this.getUserById(id);
         User user = response.getData();
         return ResultUtils.success(userService.getUserVO(user));
     }
@@ -162,8 +167,8 @@ public class UserController {
      * @param tags
      * @return
      */
-    @GetMapping("/getByTags/")
-    public BaseResponse<List<User>> getUserByTags(List<String> tags) {
+    @GetMapping("/getByTags")
+    public BaseResponse<List<User>> getUserByTags(@RequestParam("tags") List<String> tags) {
         ThrowUtils.throwIf(CollectionUtils.isEmpty(tags), ErrorCodeEnum.NO_PARAMS, "标签列表为空！");
         return ResultUtils.success(userService.searchUsersByTags(tags));
     }
@@ -244,8 +249,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/update")
-    public BaseResponse<Integer> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
-                                            HttpServletRequest request) {
+    public BaseResponse<Integer> updateUser(@RequestBody UserUpdateRequest userUpdateRequest, HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new MyException(ErrorCodeEnum.PARAMS_ERROR);
         }
@@ -259,29 +263,39 @@ public class UserController {
     /**
      * 用户推荐
      *
-     * @param pageNum
-     * @param pageSize
+     * @param num
      * @param request
      * @return
      */
     @GetMapping("/recommend")
-    public BaseResponse<Page<User>> recommendUsers(long pageNum, long pageSize, HttpServletRequest request) {
-        if (pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request)) {
-            throw new MyException(ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
-        }
+    public BaseResponse<List<UserVO>> recommendUsers(@RequestParam("num") long num, HttpServletRequest request) {
+        ThrowUtils.throwIf(num <= 0 || num > 20, ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
         User loginUser = userService.getCurrentUser(request);
-        ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
-        // 优先查询缓存
-        String redisKey = String.format("yxpei:user:recommend:%s", loginUser.getId());
-        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
-        Page<User> userPage = (Page<User>) valueOps.get(redisKey);
-        if (ObjUtil.isNotNull(userPage)) {
-            // 缓存命中
-            return ResultUtils.success(userPage);
-        }
-        // 缓存未命中，查询数据库并写入缓存
-        myCacheManager.writeRedisFromSql(redisKey, valueOps);
-        return ResultUtils.success(userPage);
+        return ResultUtils.success(userService.recommendUsers(num, loginUser));
     }
+
+//    @GetMapping("/recommend")
+//    public BaseResponse<Page<User>> recommendUsers(long pageNum, long pageSize, HttpServletRequest request) {
+//        ThrowUtils.throwIf(pageNum <= 0 || pageSize <= 0 || ObjUtil.isNull(request),
+//                ErrorCodeEnum.PARAMS_ERROR, "参数错误！");
+//        User loginUser = userService.getCurrentUser(request);
+//        ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
+//        // 优先查询缓存
+//        String redisKey = String.format("yxpei:user:recommend:%s", loginUser.getId());
+//        // - 使用布隆过滤器判断key是否存在
+//        if (!bloomFilter.contains(redisKey)) {
+//            // - key不存在，直接返回空页面，避免缓存穿透
+//            return ResultUtils.success(new Page<>(pageNum, pageSize));
+//        }
+//        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
+//        Page<User> userPage = (Page<User>) valueOps.get(redisKey);
+//        if (ObjUtil.isNotNull(userPage)) {
+//            // - 缓存命中
+//            return ResultUtils.success(userPage);
+//        }
+//        // - 缓存未命中，查询数据库并写入缓存
+//        myCacheManager.writeRedisFromSql(redisKey, valueOps);
+//        return ResultUtils.success(userPage);
+//    }
 
 }

@@ -1,12 +1,14 @@
 package com.rngad33.yxpei.cache;
 
 import jakarta.annotation.Resource;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RList;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,10 +23,10 @@ public class RedissonTest {
     @Resource
     private RedissonClient redissonClient;
 
-    private static final String PREFIX = "test:";
+//    private static final String PREFIX = "test:";
 
     @Test
-    public void redissonTest1() {
+    void redissonTest1() {
         // 设置模拟数据
         String key = "testKey";
         String value = "testValue";
@@ -48,6 +50,22 @@ public class RedissonTest {
         assertNull(storedValue, "——！删除失败！——");
 
         System.out.println("测试结束，运行正常>>>");
+    }
+
+    @Test
+    void redissonTest2() {
+        // list，数据存在本地 JVM 内存中
+        List<String> list = new ArrayList<>();
+        list.add("yupi");
+        System.out.println("list:" + list.get(0));
+
+        list.remove(0);
+
+        // 数据存在 redis 的内存中
+        RList<String> rList = redissonClient.getList("test-list");
+        rList.add("yupi");
+        System.out.println("rlist:" + rList.get(0));
+        rList.remove(0);
     }
 
     @Test
