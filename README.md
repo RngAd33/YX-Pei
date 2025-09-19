@@ -16,7 +16,7 @@
 - SpringBoot 3.3.0 框架
 - MySQL 数据库
 - MyBatis + MyBatis-Flex
-- Redis 缓存（Spring Data Redis, Redisson等多种实现方式）
+- Redis 缓存（Spring Data Redis + Redisson）
 - Redisson 分布式锁
 - Easy Excel 数据导入
 - Spring Scheduler 定时任务
