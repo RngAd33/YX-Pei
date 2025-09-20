@@ -41,7 +41,7 @@ public class PreCacheJob {
             if (lock.tryLock(0, -1, TimeUnit.SECONDS)) {
                 for (Long id : mainUserList) {
                     String redisKey = String.format("yxpei:user:recommend:%s", id);
-                    myCacheManager.writeRedisFromSql(redisKey);
+                    myCacheManager.writeRedissonFromSql(redisKey);
                 }
             }
         } catch (InterruptedException e) {
@@ -64,7 +64,7 @@ public class PreCacheJob {
             if (lock.tryLock(0, -1, TimeUnit.SECONDS)) {
                 for (Long id : mainTeamList) {
                     String redisKey = String.format("yxpei:team:recommend:%s", id);
-                    myCacheManager.writeRedisFromSql(redisKey);
+                    myCacheManager.writeRedissonFromSql(redisKey);
                 }
             }
         } catch (InterruptedException e) {
