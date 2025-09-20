@@ -1,7 +1,6 @@
 package com.rngad33.yxpei.cache;
 
 import jakarta.annotation.Resource;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RList;
 import org.redisson.api.RLock;
@@ -24,10 +23,10 @@ public class RedissonTest {
     @Resource
     private RedissonClient redissonClient;
 
-    private static final String PREFIX = "test:";
+//    private static final String PREFIX = "test:";
 
     @Test
-    public void redissonTest1() {
+    void redissonTest1() {
         // 设置模拟数据
         String key = "testKey";
         String value = "testValue";

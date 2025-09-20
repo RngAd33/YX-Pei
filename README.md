@@ -14,7 +14,7 @@
 - MySQL 数据库
 - MyBatis-Flex
 - MyBatis X 自动生成
-- Redis 缓存（Spring Data Redis 等多种实现方式）
+- Redis 缓存（Redisson 实现）
 - Redisson 分布式锁
 - Easy Excel 数据导入
 - Spring Scheduler 定时任务

@@ -3,7 +3,7 @@ package com.rngad33.yxpei.manager;
 import com.rngad33.yxpei.constant.AESConstant;
 import com.rngad33.yxpei.constant.ErrorConstant;
 import com.rngad33.yxpei.constant.UserConstant;
-import com.rngad33.yxpei.model.dto.UserManageRequest;
+import com.rngad33.yxpei.model.dto.user.UserManageRequest;
 import com.rngad33.yxpei.model.entity.User;
 import com.rngad33.yxpei.model.enums.user.UserRoleEnum;
 import jakarta.servlet.http.HttpServletRequest;
@@ -96,6 +96,7 @@ public class UserManager {
     /**
      * 用户脱敏
      * 使用掩码隐藏敏感信息，保障传输层安全
+     *
      * @param user 脱敏前的账户
      * @return 脱敏后的账户
      */

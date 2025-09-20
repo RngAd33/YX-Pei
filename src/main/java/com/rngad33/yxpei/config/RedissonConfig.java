@@ -1,10 +1,9 @@
 package com.rngad33.yxpei.config;
 
-import lombok.Data;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,29 +11,28 @@ import org.springframework.context.annotation.Configuration;
  * Redisson配置
  */
 @Configuration
-@ConfigurationProperties(prefix = "spring.data.redis")
-@Data
 public class RedissonConfig {
-
-    private String host;
-
-    private String port;
-
-    private int database;
 
     /**
      * 初始化Redisson客户端
      *
+     * @param redisProperties
      * @return
      */
     @Bean
-    public RedissonClient redissonClient() {
+    public RedissonClient redissonClient(RedisProperties redisProperties) {
         // 创建配置
         Config config = new Config();
         // - 构建Redis连接地址
-        String redisAddress = String.format("redis://%s:%s", host, port);
+        String redisAddress = "redis://" + redisProperties.getHost() + ":" + redisProperties.getPort();
         // - 配置Redisson连接（暂不使用集群）
-        config.useSingleServer().setAddress(redisAddress).setDatabase(database);
+        config.useSingleServer()
+                .setAddress(redisAddress)
+                .setDatabase(redisProperties.getDatabase());
+        // - 如果有密码则设置密码
+        if (redisProperties.getPassword() != null) {
+            config.useSingleServer().setPassword(redisProperties.getPassword());
+        }
         // 创建并返回Redisson实例
         return Redisson.create(config);
     }
