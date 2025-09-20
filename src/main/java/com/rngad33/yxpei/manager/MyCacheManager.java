@@ -8,8 +8,6 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
@@ -23,49 +21,10 @@ import java.util.concurrent.TimeUnit;
 public class MyCacheManager {
 
     @Resource
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Resource
     private RedissonClient redissonClient;
 
     @Resource
     private UserService userService;
-
-    /**
-     * 缓存写入（基于 Redis）
-     *
-     * @param redisKey
-     */
-    public void writeRedisFromSql(String redisKey) {
-        // 查询数据库
-        QueryWrapper queryWrapper = new QueryWrapper();
-        Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
-        // 写缓存
-        try {
-            redisTemplate.opsForValue()
-                    .set(redisKey, userPage, 60 + new Random().nextInt(50), TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.error("! Redis set key error: ", e.getMessage());
-        }
-    }
-
-    /**
-     * 缓存写入（基于 Redis）
-     *
-     * @param redisKey
-     * @param valueOps
-     */
-    public void writeRedisFromSql(String redisKey, ValueOperations<String, Object> valueOps) {
-        // 查询数据库
-        QueryWrapper queryWrapper = new QueryWrapper();
-        Page<User> userPage = userService.page(new Page<>(1, 10), queryWrapper);
-        // 写缓存
-        try {
-            valueOps.set(redisKey, userPage, 60 + new Random().nextInt(50), TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.error("! Redis set key error: ", e.getMessage());
-        }
-    }
 
     /**
      * 缓存写入（基于 Redisson）
