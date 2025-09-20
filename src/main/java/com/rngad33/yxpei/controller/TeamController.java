@@ -26,6 +26,8 @@ import com.rngad33.yxpei.utils.ThrowUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.redisson.api.RBloomFilter;
+import org.redisson.api.RMap;
+import org.redisson.api.RedissonClient;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +47,9 @@ public class TeamController {
     private MyCacheManager myCacheManager;
 
     @Resource
+    private RedissonClient redissonClient;
+
+    @Resource
     private UserManager userManager;
 
     @Resource
@@ -55,8 +60,6 @@ public class TeamController {
 
     @Resource
     private UserTeamService userTeamService;
-
-    private RBloomFilter<String> bloomFilter;
 
     /**
      * 创建队伍
@@ -232,18 +235,19 @@ public class TeamController {
         User loginUser = userService.getCurrentUser(request);
         ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCodeEnum.USER_NOT_LOGIN_MESSAGE);
         String redisKey = String.format("yxpei:team:recommend:%s", loginUser.getId());
-        // - 使用布隆过滤器判断key是否存在
+        // 使用布隆过滤器判断key是否存在
+        RBloomFilter<String> bloomFilter = redissonClient.getBloomFilter("team_recommend_bloom_filter");
         if (!bloomFilter.contains(redisKey)) {
             // - key不存在，直接返回空页面，避免缓存穿透
             return ResultUtils.success(new Page<>(pageNum, pageSize));
         }
-        ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
-        Page<Team> teamPage = (Page<Team>) valueOps.get(redisKey);
+        RMap<String, Object> cacheMap = redissonClient.getMap(redisKey);
+        Page<Team> teamPage = (Page<Team>) cacheMap.get(redisKey);
         if (ObjUtil.isNotNull(teamPage)) {
             // - 缓存命中
             return ResultUtils.success(teamPage);
         }
-        myCacheManager.writeRedisFromSql(redisKey, valueOps);
+        myCacheManager.writeRedissonFromSql(redisKey);
         return ResultUtils.success(teamPage);
     }
 
