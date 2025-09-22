@@ -247,7 +247,7 @@ public class TeamController {
             // - 缓存命中
             return ResultUtils.success(teamPage);
         }
-        myCacheManager.writeRedissonFromSql(redisKey);
+        myCacheManager.writeRedissonFromSql(redisKey, cacheMap);
         return ResultUtils.success(teamPage);
     }
 
