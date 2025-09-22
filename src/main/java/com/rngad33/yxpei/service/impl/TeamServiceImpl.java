@@ -369,6 +369,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         final long leaderId = request.getLeaderId();
         Integer status = request.getStatus();
         String searchText = request.getSearchText();
+
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.eq("id", id, ObjUtil.isNotNull(id) && id > 0);
         queryWrapper.like("team_name", teamName, StrUtil.isNotBlank(teamName));
@@ -376,6 +377,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
         queryWrapper.eq("leader_id", leaderId, ObjUtil.isNotNull(leaderId) && leaderId > 0);
         queryWrapper.eq("status", status, ObjUtil.isNotNull(status) && status > -1);
         if (StrUtil.isNotBlank(searchText)) {
+            // 转义模糊查询关键字，防止 SQL 模糊匹配异常
+            String escapedSearchText = searchText.replace("\\", "\\\\")
+                    .replace("%", "\\%")
+                    .replace("_", "\\_");
             queryWrapper.and(TEAM.TEAM_NAME.like(searchText).or(TEAM.DESCRIPTION.like(searchText)));
         }
         // 过期队伍不予展示

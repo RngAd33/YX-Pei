@@ -29,6 +29,10 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
         <!-- MyBatis-Flex -->
         <!-- https://mvnrepository.com/artifact/com.mybatis-flex/mybatis-flex-spring-boot3-starter -->
         <dependency>
@@ -43,12 +47,9 @@
             <version>1.11.1</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Redisson -->
-        <!-- https://mvnrepository.com/artifact/org.redisson/redisson -->
         <dependency>
-            <groupId>org.redisson</groupId>
-            <artifactId>redisson</artifactId>
-            <version>3.50.0</version>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
         </dependency>
         <!-- MySQL -->
         <dependency>
@@ -57,9 +58,12 @@
             <version>8.0.33</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Redisson -->
+        <!-- https://mvnrepository.com/artifact/org.redisson/redisson -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc</artifactId>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.50.0</version>
         </dependency>
         <!-- Jackson -->
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
